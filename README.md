@@ -4,9 +4,7 @@ A [prometheus](https://prometheus.io/) exporter for collecting metrics from a [t
 ## Why should I use it?
 TNC exporter provides a powerful interface for collecting and visualizing metrics from your TNC. Using this exporter, prometheus, and grafana, you can visualize at a glance the quantity of packet RX/TX across your TNC, quantity of packets by different type, and distance of packets received (for packets that report location data). You can also customize and build your own visualizations or directly query metrics using prometheus' built-in tools.
 
-Prometheus and Grafana can also be used to monitor a variety of non-TNC-related metrics. As a starting point, I suggest checking out Prometheus' official [node exporter](https://github.com/prometheus/node_exporter). This shows a variety of hardware and OS-level metrics, so if you're running your TNC on e.g. a Raspberry Pi, you can now have a unified dashboard for both system and TNC monitoring.
-
-## What is prometheus and grafana? How do I get started?
+## What are prometheus and grafana?
 [Prometheus](https://prometheus.io/) is a free, open source monitoring tool that allows easy collection and storage of time-series data. Some programs natively export metrics in a prometheus-friendly format, while others require a helper program called an "exporter" that enables prometheus to pull metrics. Prometheus is commonly used to monitor everything from CPU usage to network throughput but has the flexibility to monitor most data that fits in time-series format.
 
 [Grafana](https://grafana.com/) is a popular, open source application for building graphical dashboards that can easily visualize prometheus data in a clear, flexible and beautiful format. TNC exporter includes an example grafana dashboard, but this can be easily modified or replaced to suit your own needs.
@@ -15,11 +13,15 @@ Prometheus and Grafana can also be used to monitor a variety of non-TNC-related 
 
 Grafana isn't the only way to visualize prometheus data. You can use prometheus' [built-in expression browser](https://prometheus.io/docs/visualization/browser/), the prometheus templating language to [build your own console](https://prometheus.io/docs/visualization/consoles/), or any third-party tools that support prometheus.
 
+Prometheus and Grafana can also be used to monitor a variety of non-TNC-related metrics. As a starting point, I suggest checking out Prometheus' official [node exporter](https://github.com/prometheus/node_exporter). This shows a variety of hardware and OS-level metrics, so if you're running your TNC on e.g. a Raspberry Pi, you can now have a unified dashboard for both system and TNC monitoring.
+
 ## Metrics exposed by TNC exporter
-- packet_rx: Number of packets received (counter)
-- packet_tx: Number of packets transmitted (counter)
+- packet_rx: Number of packets received in last 5 minutes(counter)
+- packet_tx: Number of packets transmitted received in last 5 minutes (counter)
 - packet_distance: Distance of received packets from TNC, for those packet types that report location data (histogram)
+- packet_max_distance: Maximum distance of packets received in last 5 minutes (counter)  
 - packet_rx_type: Count of packets received by type (counter)
+- packet_rx_callsign: Count of packets received by callsing (histogram)
 
 ## Installation
 In order to visualize TNC metrics using this exporter, there are four steps. First, install prometheus. Then, install the exporter and configure your prometheus instance to pull metrics from it. Next, install grafana. Finally, install the TNC exporter dashboard in grafana and configure it to connect to your prometheus instance.
@@ -43,6 +45,9 @@ There are three methods to install TNC exporter
 
 ### Installing and configuring grafana
 A full guide on how to install and configure grafana is outside the scope of this readme. Please consult the [official Grafana installation guide](https://grafana.com/docs/grafana/latest/installation/) or the many other online tutorials available.
+
+## Contributing
+*TODO: Contribution guidelines*
 
 ## License
 *TODO: create LICENSE.md*
