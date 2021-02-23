@@ -16,12 +16,11 @@ Grafana isn't the only way to visualize prometheus data. You can use prometheus'
 Prometheus and Grafana can also be used to monitor a variety of non-TNC-related metrics. As a starting point, I suggest checking out Prometheus' official [node exporter](https://github.com/prometheus/node_exporter). This shows a variety of hardware and OS-level metrics, so if you're running your TNC on e.g. a Raspberry Pi, you can now have a unified dashboard for both system and TNC monitoring.
 
 ## Metrics exposed by TNC exporter
-- packet_rx: Number of packets received in last 5 minutes(counter)
-- packet_tx: Number of packets transmitted received in last 5 minutes (counter)
+- packet_rx: Number of packets received and decoded (counter)
+- packet_tx: Number of packets transmitted (counter)
 - packet_distance: Distance of received packets from TNC, for those packet types that report location data (histogram)
-- packet_max_distance: Maximum distance of packets received in last 5 minutes (counter)  
 - packet_rx_type: Count of packets received by type (counter)
-- packet_rx_callsign: Count of packets received by callsing (histogram)
+- packet_rx_callsign: Count of packets received by callsign (histogram)
 
 ## Installation
 In order to visualize TNC metrics using this exporter, there are four steps. First, install prometheus. Then, install the exporter and configure your prometheus instance to pull metrics from it. Next, install grafana. Finally, install the TNC exporter dashboard in grafana and configure it to connect to your prometheus instance.
