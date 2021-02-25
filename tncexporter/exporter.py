@@ -6,7 +6,7 @@ process_packets is called from the main application loop
 """
 
 from metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE
-
+from math import asin, cos, sin, sqrt, radians
 
 def haversine_distance(
     pos1: tuple,
@@ -54,4 +54,3 @@ def process_packets(packet_listener: object, tnc_latlon: tuple):
         else:
             # if a packet is transmitted, increment PACKET_TX
             PACKET_TX.inc(packets_tx)
-
