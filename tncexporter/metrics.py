@@ -4,6 +4,6 @@ This module defines the prometheus metrics to be exported
 from prometheus_client import Counter, Histogram, Summary
 
 PACKET_RX = Counter("packet_rx", "Number of packets received and decoded")
-PACKET_TX = Counter("packet_rx", "Number of packets transmitted")
+PACKET_TX = Counter("packet_tx", "Number of packets transmitted")
 PACKET_DISTANCE = Histogram("packet_distance", "Distance of received packets from TNC")
 
