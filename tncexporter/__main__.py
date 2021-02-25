@@ -7,7 +7,7 @@ import time
 import argparse
 import logging
 import exporter
-import listener
+from listener import Listener
 
 """Run prometheus client and export TNC metrics"""
 # set up command-line argument parser
@@ -16,6 +16,7 @@ parser.add_argument(
     "--tnc-url",
     metavar="<TNC url and port>",
     type=str,
+    dest="tnc_url",
     default="http://localhost:8000",
     help="the URL for the TNC's AGWPE TCP/IP interface",
 )
@@ -71,7 +72,9 @@ else:
 # The prometheus server pulls metrics from the exporter's http server
 start_http_server(port=args.port, addr=args.host)
 
+tnc_listener = Listener(args.tnc_url)
+
 while True:
-    exporter.process_packets()
+    exporter.process_packets(tnc_latlon=(args.latitude, args.longitude))
     # wait x seconds before generating metrics again
     time.sleep(args.interval)
