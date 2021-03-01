@@ -8,6 +8,7 @@ process_packets is called from the main application loop
 from metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE
 from math import asin, cos, sin, sqrt, radians
 
+
 def haversine_distance(
     pos1: tuple,
     pos2: tuple,
@@ -49,7 +50,7 @@ def process_packets(packet_listener: object, tnc_latlon: tuple):
         if True:
             # if a packet is received and decoded, increment PACKET_RX metric
             PACKET_RX.inc(packets_rx)
-            distance_from_tnc = haversine_distance()
+            distance_from_tnc = haversine_distance(pos1=tnc_latlon, pos2=packet.latlon)
             PACKET_DISTANCE.observe(distance_from_tnc)
         else:
             # if a packet is transmitted, increment PACKET_TX
