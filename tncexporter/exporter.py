@@ -5,8 +5,20 @@ process_packets is called from the main application loop
 
 """
 
-from metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE
+from metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, RF_PACKET_DISTANCE
 from math import asin, cos, sin, sqrt, radians
+from typing import TypedDict
+import datetime
+
+
+class PacketInfo(TypedDict):
+    """Typed dictionary for defining AX.25 packet metadata"""
+    frame_type: str  # type of frame (U, I, S, T, other)
+    data_len: int  # length of data in packet (inclusive of 36 byte header)
+    call_from: str  # originating callsign
+    call_to: str  # destination callsign
+    timestamp: datetime.datetime  # timestamp of when packet was received by TNC
+    lat_lon: tuple  # tuple containing two floats representing latitude and longitude
 
 
 def haversine_distance(
@@ -40,18 +52,33 @@ def haversine_distance(
     return distance
 
 
-def process_packets(packet_listener: object, tnc_latlon: tuple):
+def decode_packet(raw_packet):
+    """Decode packet bytestring, create a PacketInfo object
+    :param raw_packet: packet bytestrings
+    :returns: Typed dictionary containing metadata
+    :rtype: PacketInfo"""
+    len_data = int.from_bytes(raw_packet[30:34], signed=False, byteorder="little", )
+    return PacketInfo(
+        data_len=len_data
+    )
+
+
+def update_metrics(packet_info: PacketInfo, tnc_latlon: tuple):
     """
-    Function that processes packets collected by the TNC API listener and adjusts metrics.
-    :param packet_listener: a Listener object (see listener.py)
+    Function that processes packet metadata and updates Prometheus metrics.
+
+    :param packet_info: a list of PacketInfo objects containing packet metadata
     :param tnc_latlon: a tuple defining (lat, lon) of the TNC in decimal degrees
     """
-    for packet in packet_listener.packets:
-        if True:
-            # if a packet is received and decoded, increment PACKET_RX metric
-            PACKET_RX.inc(packets_rx)
-            distance_from_tnc = haversine_distance(pos1=tnc_latlon, pos2=packet.latlon)
+    if packet_info['frame_type'] == 't':
+        # if a packet is transmitted, increment PACKET_TX
+        PACKET_TX.inc()
+    else:
+        # if a packet is received and decoded, increment PACKET_RX metric
+        PACKET_RX.inc()
+        if packet_info['lat_lon']:
+            # calculate distance between TNC location and packet's reported lat/lon
+            distance_from_tnc = haversine_distance(pos1=tnc_latlon, pos2=packet_info['lat_lon'])
             PACKET_DISTANCE.observe(distance_from_tnc)
-        else:
-            # if a packet is transmitted, increment PACKET_TX
-            PACKET_TX.inc(packets_tx)
+            # TODO: determine if packet was digipeated to increment RF_PACKET_DISTANCE
+
