@@ -35,12 +35,22 @@ parser.add_argument(
     help="The port to expose collected metrics from. Default is 9110",
 )
 parser.add_argument(
-    "--stats-interval",
+    "--update-interval",
     metavar="<stats data refresh interval>",
     type=int,
     dest="interval",
     default=60,
-    help="The number of seconds between updates of TNC stats. Default is 60 seconds",
+    help="The number of seconds between updates of TNC metrics. This determines the rate at which "
+         "the prometheus client exposes new metrics. Default is 60 seconds",
+)
+parser.add_argument(
+    "--summary-interval",
+    metavar="<summary metrics interval>",
+    type=int,
+    dest="summary_interval",
+    default=300,
+    help="The number of seconds over which to calculate recent activity summary metrics. Metrics"
+         "that end with _recent are affected by this parameter. Default is 300 seconds (5 minutes)",
 )
 parser.add_argument(
     "--latitude",
