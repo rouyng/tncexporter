@@ -61,12 +61,12 @@ def decode_packet(raw_packet):
     len_data = int.from_bytes(raw_packet[30:34], signed=False, byteorder="little", )
     frame_type = chr(raw_packet[4])
     try:
-        call_from = raw_packet[8:18].decode("utf-8")
+        call_from = raw_packet[8:18].decode("utf-8").strip('\x00')
     except UnicodeDecodeError:
         call_from = None
         logging.debug(f"Unicode error when decoding: {raw_packet[8:18]}")
     try:
-        call_to = raw_packet[18:28].decode("utf-8")
+        call_to = raw_packet[18:28].decode("utf-8").strip('\x00')
     except UnicodeDecodeError:
         call_to = None
         logging.debug(f"Unicode error when decoding: {raw_packet[18:28]}")
