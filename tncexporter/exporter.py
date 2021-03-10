@@ -9,6 +9,7 @@ from metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, RF_PACKET_DISTANCE
 from math import asin, cos, sin, sqrt, radians
 from typing import TypedDict
 import datetime
+import logging
 
 
 class PacketInfo(TypedDict):
@@ -58,8 +59,22 @@ def decode_packet(raw_packet):
     :returns: Typed dictionary containing metadata
     :rtype: PacketInfo"""
     len_data = int.from_bytes(raw_packet[30:34], signed=False, byteorder="little", )
+    frame_type = chr(raw_packet[4])
+    try:
+        call_from = raw_packet[8:18].decode("utf-8")
+    except UnicodeDecodeError:
+        call_from = None
+        logging.debug(f"Unicode error when decoding: {raw_packet[8:18]}")
+    try:
+        call_to = raw_packet[18:28].decode("utf-8")
+    except UnicodeDecodeError:
+        call_to = None
+        logging.debug(f"Unicode error when decoding: {raw_packet[18:28]}")
     return PacketInfo(
-        data_len=len_data
+        frame_type=frame_type,
+        data_len=len_data,
+        call_from=call_from,
+        call_to=call_to
     )
 
 
