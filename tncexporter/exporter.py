@@ -5,7 +5,7 @@ process_packets is called from the main application loop
 
 """
 
-from metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, RF_PACKET_DISTANCE
+from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, RF_PACKET_DISTANCE
 from math import asin, cos, sin, sqrt, radians
 from typing import TypedDict
 import datetime
