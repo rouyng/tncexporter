@@ -23,7 +23,6 @@ class Listener:
         self.tnc_host = self.parsed_url.hostname  # tnc host to connect to
         self.tnc_port = int(self.parsed_url.port)  # tnc port to listen on
         self.packets = []  # queue of raw packet bytestrings to be parsed/processed by exporter
-        self.decoded_packets = []  # list of PacketInfo objects decoded from packet bytestrings
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect(self.tnc_host, self.tnc_port)
         self.api_version = None  # version returned by host API
@@ -36,7 +35,7 @@ class Listener:
         self.client_socket.sendall(MONITOR_REQUEST)  # ask tnc to send monitor packets
 
     def receive_packet(self):
-        """Receive a packet from the AGWPE API and append it to the packet list as a bytestring"""
+        """Receive a packet from the AGWPE API and append it to the packet list as a byte string"""
         chunks = b""
         bytes_recv = 0
         while bytes_recv < 36:
@@ -46,3 +45,10 @@ class Listener:
             chunks += chunk
             bytes_recv += len(chunk)
         self.packets.append(chunks)
+
+    def start(self):
+        """This function runs after a connection is established and continuously receives
+        packets until interrupted"""
+        # TODO: make this placeholder function asynchronous
+        while True:
+            self.receive_packet()
