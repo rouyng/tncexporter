@@ -5,6 +5,8 @@ name = "pypi"
 
 [packages]
 prometheus-client = "*"
+pytest = "*"
+flake8 = "*"
 
 [dev-packages]
 
