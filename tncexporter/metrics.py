@@ -18,10 +18,10 @@ PACKET_TX_RECENT = Gauge("packet_tx_recent",
 
 # Metrics tracking distances of received frames. Only calculated for frames that report
 # position data (APRS)
-PACKET_DISTANCE = Histogram("frame_distance",
-                            "Distance of received position packets from TNC (digipeated and RF)")
-RF_PACKET_DISTANCE = Histogram("rf_frame_distance",
-                               "Distance of received position packets from TNC (RF only)")
+PACKET_DISTANCE = Summary("frame_distance",
+                          "Distance of received position packets from TNC (digipeated and RF)")
+RF_PACKET_DISTANCE = Summary("rf_frame_distance",
+                             "Distance of received position packets from TNC (RF only)")
 MAX_DISTANCE_RECENT = Gauge("max_range_recent",
                             "Maximum range of position frames received over last time period")
 
