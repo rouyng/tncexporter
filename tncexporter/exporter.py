@@ -10,6 +10,7 @@ from math import asin, cos, sin, sqrt, radians
 from typing import TypedDict
 import datetime
 import logging
+import re
 
 
 class PacketInfo(TypedDict):
@@ -70,11 +71,25 @@ def decode_packet(raw_packet):
     except UnicodeDecodeError:
         call_to = None
         logging.debug(f"Unicode error when decoding: {raw_packet[18:28]}")
+    timestamp = None
+    if frame_type in ('I', 'U'):
+        time_match = re.search(b"[0-2][0-9]:[0-5][0-9]:[0-5][0-9]", raw_packet)
+        if time_match is not None:
+            try:
+                raw_hour = time_match.group()[0:2]
+                raw_min = time_match.group()[3:5]
+                raw_sec = time_match.group()[6:8]
+                timestamp = datetime.time(hour=int(raw_hour),
+                                          minute=int(raw_min),
+                                          second=int(raw_sec))
+            except TypeError:
+                pass
     return PacketInfo(
         frame_type=frame_type,
         data_len=len_data,
         call_from=call_from,
-        call_to=call_to
+        call_to=call_to,
+        timestamp=timestamp
     )
 
 
