@@ -59,7 +59,7 @@ def decode_packet(raw_packet):
     :param raw_packet: packet bytestrings
     :returns: Typed dictionary containing metadata
     :rtype: PacketInfo"""
-    len_data = int.from_bytes(raw_packet[30:34], signed=False, byteorder="little", )
+    len_data = int.from_bytes(raw_packet[28:32], signed=False, byteorder="little")
     frame_type = chr(raw_packet[4])
     try:
         call_from = raw_packet[8:18].decode("utf-8").strip('\x00')
@@ -100,13 +100,13 @@ def update_metrics(packet_info: PacketInfo, tnc_latlon: tuple):
     :param packet_info: a list of PacketInfo objects containing packet metadata
     :param tnc_latlon: a tuple defining (lat, lon) of the TNC in decimal degrees
     """
-    if packet_info['frame_type'] == 't':
+    if packet_info['frame_type'].lower() == 't':
         # if a packet is transmitted, increment PACKET_TX
         PACKET_TX.inc()
     else:
         # if a packet is received and decoded, increment PACKET_RX metric
         PACKET_RX.inc()
-        if packet_info['lat_lon']:
+        if packet_info['lat_lon'] is not None:
             # calculate distance between TNC location and packet's reported lat/lon
             distance_from_tnc = haversine_distance(pos1=tnc_latlon, pos2=packet_info['lat_lon'])
             PACKET_DISTANCE.observe(distance_from_tnc)
