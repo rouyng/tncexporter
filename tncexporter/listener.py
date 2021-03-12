@@ -4,6 +4,7 @@ packets and extracting specific kinds of data to be instrumented.
 """
 from urllib.parse import urlparse
 import socket
+import logging
 
 # AGWPE format packet to request version from TNC host
 VERSION_REQUEST = b"\x00\x00\x00\x00\x52\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
@@ -45,6 +46,7 @@ class Listener:
             chunks += chunk
             bytes_recv += len(chunk)
         self.packets.append(chunks)
+        logging.debug(f"Received packet, total {len(self.packets)}")
 
     def start(self):
         """This function runs after a connection is established and continuously receives
