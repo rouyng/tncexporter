@@ -38,5 +38,25 @@ class TestPacketDecodes:
         test_result = exporter.decode_packet(raw_packet)
         assert test_result['frame_type'] == "T"
 
+    def test_timestamp_1(self):
+        raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00W6SCE-10\x00\x00APN382\x00\x00\x00\x00\x97' \
+                     b'\x00\x00\x00\x00\x00\x00\x00 1:Fm W6SCE-10 To APN382 Via WIDE2-1 <UI ' \
+                     b'pid=F0 Len=77 PF=0 >[14:33:38]\r!3419.82N111836.06W#PHG6860/W1 on Oat ' \
+                     b'Mtn./A=003747/k6ccc@amsat.org for info\r\r\x00 '
+        test_result = exporter.decode_packet(raw_packet)
+        assert test_result['timestamp'].hour == 14
+        assert test_result['timestamp'].minute == 33
+        assert test_result['timestamp'].second == 38
+
+    def test_timestamp_2(self):
+        raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00W6SCE-10\x00\x00APN382\x00\x00\x00\x00\x97' \
+                     b'\x00\x00\x00\x00\x00\x00\x00 1:Fm W6SCE-10 To APN382 Via WIDE2-1 <UI ' \
+                     b'pid=F0 Len=77 PF=0 >[00:11:56]\r!3419.82N111836.06W#PHG6860/W1 on Oat ' \
+                     b'Mtn./A=003747/k6ccc@amsat.org for info\r\r\x00 '
+        test_result = exporter.decode_packet(raw_packet)
+        assert test_result['timestamp'].hour == 0
+        assert test_result['timestamp'].minute == 11
+        assert test_result['timestamp'].second == 56
+
 
 

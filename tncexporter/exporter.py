@@ -21,6 +21,8 @@ class PacketInfo(TypedDict):
     call_to: str  # destination callsign
     timestamp: datetime.datetime  # timestamp of when packet was received by TNC
     lat_lon: tuple  # tuple containing two floats representing latitude and longitude
+    # TODO: # hops or digipeated boolean field to distinguish packets received on simplex
+    #  from digipeated packets?
 
 
 def haversine_distance(
@@ -71,9 +73,12 @@ def decode_packet(raw_packet):
     except UnicodeDecodeError:
         call_to = None
         logging.debug(f"Unicode error when decoding: {raw_packet[18:28]}")
+
     timestamp = None
-    if frame_type in ('I', 'U'):
-        time_match = re.search(b"[0-2][0-9]:[0-5][0-9]:[0-5][0-9]", raw_packet)
+    lat_lon = None
+    try:
+        data_string = raw_packet[36:].decode("utf-8").strip('\x00')
+        time_match = re.search("[0-2][0-9]:[0-5][0-9]:[0-5][0-9]", data_string)
         if time_match is not None:
             try:
                 raw_hour = time_match.group()[0:2]
@@ -84,6 +89,9 @@ def decode_packet(raw_packet):
                                           second=int(raw_sec))
             except TypeError:
                 pass
+    except UnicodeDecodeError:
+        logging.error("Error decoding bytes into unicode")
+
     return PacketInfo(
         frame_type=frame_type,
         data_len=len_data,
