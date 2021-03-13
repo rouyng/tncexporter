@@ -21,8 +21,7 @@ class PacketInfo(TypedDict):
     call_to: str  # destination callsign
     timestamp: datetime.datetime  # timestamp of when packet was received by TNC
     lat_lon: tuple  # tuple containing two floats representing latitude and longitude
-    # TODO: # hops or digipeated boolean field to distinguish packets received on simplex
-    #  from digipeated packets?
+    hops_count: int  # number of hops. Non-digipeated packets should have 0
 
 
 def haversine_distance(
@@ -76,6 +75,7 @@ def decode_packet(raw_packet):
 
     timestamp = None
     lat_lon = None
+    hops = []
     try:
         data_string = raw_packet[36:].decode("utf-8").strip('\x00')
         time_match = re.search("[0-2][0-9]:[0-5][0-9]:[0-5][0-9]", data_string)
@@ -89,6 +89,16 @@ def decode_packet(raw_packet):
                                           second=int(raw_sec))
             except TypeError:
                 pass
+        try:
+            hops_string = re.findall("(Via )(.*?)( <)", data_string)[0][1]
+            path_types = ('WIDE',
+                          'RELAY',
+                          'BEACON')
+            # TODO: instead of explicitly specifying WIDE paths, write regex for all WIDE*
+            hops = [h for h in hops_string.split(',') if h not in path_types]
+            logging.debug("Hops:", hops)
+        except IndexError:
+            pass
     except UnicodeDecodeError:
         logging.error("Error decoding bytes into unicode")
 
@@ -97,7 +107,8 @@ def decode_packet(raw_packet):
         data_len=len_data,
         call_from=call_from,
         call_to=call_to,
-        timestamp=timestamp
+        timestamp=timestamp,
+        hops_count=len(hops)
     )
 
 
