@@ -22,7 +22,7 @@ class PacketInfo(TypedDict):
     timestamp: datetime.datetime  # timestamp of when packet was received by TNC
     lat_lon: tuple  # tuple containing two floats representing latitude and longitude
     hops_count: int  # number of hops. Non-digipeated packets should have 0
-    hops_path: list # list of hop callsigns
+    hops_path: list  # list of hop callsigns
 
 
 def haversine_distance(
@@ -107,6 +107,14 @@ def decode_packet(raw_packet):
             logging.info("Hops:", hops)
         except IndexError:
             pass
+        try:
+            # parse latitude and longitude from position packets
+            latlon_regex = r"([0-9][0-9][0-9][0-9]\.[0-9][0-9])(N|S).{0,2}" \
+                           r"([0-1][0-9][0-9][0-9][0-9]\.[0-9][0-9])(E|W)"
+            latlon_match = re.search(latlon_regex, data_string)
+        except IndexError:
+            pass
+
     except UnicodeDecodeError:
         logging.error("Error decoding bytes into unicode")
 
