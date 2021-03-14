@@ -22,6 +22,7 @@ class PacketInfo(TypedDict):
     timestamp: datetime.datetime  # timestamp of when packet was received by TNC
     lat_lon: tuple  # tuple containing two floats representing latitude and longitude
     hops_count: int  # number of hops. Non-digipeated packets should have 0
+    hops_path: list # list of hop callsigns
 
 
 def haversine_distance(
@@ -78,6 +79,7 @@ def decode_packet(raw_packet):
     hops = []
     try:
         data_string = raw_packet[36:].decode("utf-8").strip('\x00')
+        # parse timestamp
         time_match = re.search("[0-2][0-9]:[0-5][0-9]:[0-5][0-9]", data_string)
         if time_match is not None:
             try:
@@ -90,13 +92,19 @@ def decode_packet(raw_packet):
             except TypeError:
                 pass
         try:
-            hops_string = re.findall("(Via )(.*?)( <)", data_string)[0][1]
-            path_types = ('WIDE',
-                          'RELAY',
+            # parse list of hops
+            hops_string = re.findall("(?:Via )(.*?)(?: <)", data_string)[0]
+            # tuple of non-WIDE path types that don't represent hops through a digipeater
+            # TODO: research additional paths that may appear in packets?
+            path_types = ('RELAY',
                           'BEACON')
-            # TODO: instead of explicitly specifying WIDE paths, write regex for all WIDE*
-            hops = [h for h in hops_string.split(',') if h not in path_types]
-            logging.debug("Hops:", hops)
+            # regex matching all WIDE paths like WIDE1, WIDE 1-1, WIDE2-2 etc
+            wide_regex = "^WIDE(\b|([0-9]-[0-9])|[0-9])"
+            # determine if the packet was digipeated by making a list of hops that dont
+            # match known "path" hop types
+            hops = [h for h in hops_string.split(',') if h not in path_types
+                    and re.fullmatch(wide_regex, h) is None]
+            logging.info("Hops:", hops)
         except IndexError:
             pass
     except UnicodeDecodeError:
@@ -108,7 +116,8 @@ def decode_packet(raw_packet):
         call_from=call_from,
         call_to=call_to,
         timestamp=timestamp,
-        hops_count=len(hops)
+        hops_count=len(hops),
+        hops_path = hops
     )
 
 
