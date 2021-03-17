@@ -59,4 +59,17 @@ class TestPacketDecodes:
         assert test_result['timestamp'].second == 56
 
 
+class TestHaversine:
+    """Test distance calculations performed by exporter.haversine_distance()"""
 
+    def test_haversine_1(self):
+        point1 = (-2.74, -44.14)
+        point2 = (42.32, -113.04)
+        distance = exporter.haversine_distance(point1, point2)
+        assert round(distance, 2) == 8504802.16
+
+    def test_haversine_2(self):
+        point1 = (33.32, -111.94)
+        point2 = (33.42, -111.60)
+        distance = exporter.haversine_distance(point1, point2)
+        assert round(distance, 2) == 33474.17
