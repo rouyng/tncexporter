@@ -98,7 +98,8 @@ def parse_packet(raw_packet):
             # tuple of non-WIDE path types that don't represent hops through a digipeater
             # TODO: research additional paths that may appear in packets?
             path_types = ('RELAY',
-                          'BEACON')
+                          'BEACON',
+                          'ARISS')
             # regex matching all WIDE paths like WIDE1, WIDE 1-1, WIDE2-2 etc
             wide_regex = "^WIDE(\b|([0-9]-[0-9])|[0-9])"
             # determine if the packet was digipeated by making a list of hops that dont
