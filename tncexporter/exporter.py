@@ -56,8 +56,8 @@ def haversine_distance(
     return distance
 
 
-def decode_packet(raw_packet):
-    """Decode packet bytestring, create a PacketInfo object
+def parse_packet(raw_packet):
+    """Parse packet bytestring, create a PacketInfo object
     :param raw_packet: packet bytestrings
     :returns: Typed dictionary containing metadata
     :rtype: PacketInfo"""
