@@ -75,7 +75,8 @@ def decode_packet(raw_packet):
         logging.debug(f"Unicode error when decoding: {raw_packet[18:28]}")
 
     timestamp = None
-    lat_lon = None
+    latitude = None
+    longitude = None
     hops = []
     try:
         data_string = raw_packet[36:].decode("utf-8").strip('\x00')
@@ -112,7 +113,20 @@ def decode_packet(raw_packet):
             latlon_regex = r"([0-9][0-9][0-9][0-9]\.[0-9][0-9])(N|S).{0,2}" \
                            r"([0-1][0-9][0-9][0-9][0-9]\.[0-9][0-9])(E|W)"
             latlon_match = re.search(latlon_regex, data_string)
-        except IndexError:
+            raw_lat, lat_direction, raw_lon, lon_direction = latlon_match
+            if lat_direction == 'N':
+                latitude = float(raw_lat)
+            elif lat_direction == 'S':
+                latitude = -float(raw_lat)
+            else:
+                latitude = None
+            if lon_direction == 'E':
+                longitude = float(raw_lat)
+            elif lat_direction == 'W':
+                longitude = -float(raw_lat)
+            else:
+                longitude = None
+        except (IndexError, ValueError):
             pass
 
     except UnicodeDecodeError:
@@ -125,7 +139,8 @@ def decode_packet(raw_packet):
         call_to=call_to,
         timestamp=timestamp,
         hops_count=len(hops),
-        hops_path = hops
+        hops_path=hops,
+        lat_lon=(latitude, longitude)
     )
 
 

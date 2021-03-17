@@ -58,6 +58,7 @@ class TestPacketDecodes:
         assert test_result['timestamp'].minute == 11
         assert test_result['timestamp'].second == 56
 
+    # TODO: lat/lon parse testing
 
 class TestHaversine:
     """Test distance calculations performed by exporter.haversine_distance()"""
