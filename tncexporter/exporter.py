@@ -114,19 +114,23 @@ def parse_packet(raw_packet):
             latlon_regex = r"([0-9][0-9][0-9][0-9]\.[0-9][0-9])(N|S).{0,2}" \
                            r"([0-1][0-9][0-9][0-9][0-9]\.[0-9][0-9])(E|W)"
             latlon_match = re.search(latlon_regex, data_string)
-            raw_lat, lat_direction, raw_lon, lon_direction = latlon_match
-            if lat_direction == 'N':
-                latitude = float(raw_lat)
-            elif lat_direction == 'S':
-                latitude = -float(raw_lat)
-            else:
-                latitude = None
-            if lon_direction == 'E':
-                longitude = float(raw_lat)
-            elif lat_direction == 'W':
-                longitude = -float(raw_lat)
-            else:
-                longitude = None
+            if latlon_match is not None:
+                raw_lat = latlon_match[1]
+                lat_direction= latlon_match[2]
+                raw_lon = latlon_match[3]
+                lon_direction = latlon_match[4]
+                if lat_direction == 'N':
+                    latitude = float(raw_lat)
+                elif lat_direction == 'S':
+                    latitude = -float(raw_lat)
+                else:
+                    latitude = None
+                if lon_direction == 'E':
+                    longitude = float(raw_lon)
+                elif lat_direction == 'W':
+                    longitude = -float(raw_lon)
+                else:
+                    longitude = None
         except (IndexError, ValueError):
             pass
 
