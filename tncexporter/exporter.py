@@ -19,7 +19,7 @@ class PacketInfo(TypedDict):
     data_len: int  # length of data in packet (inclusive of 36 byte header)
     call_from: str  # originating callsign
     call_to: str  # destination callsign
-    timestamp: datetime.datetime  # timestamp of when packet was received by TNC
+    timestamp: datetime.time  # timestamp of when packet was received by TNC
     lat_lon: tuple  # tuple containing two floats representing latitude and longitude
     hops_count: int  # number of hops. Non-digipeated packets should have 0
     hops_path: list  # list of hop callsigns
