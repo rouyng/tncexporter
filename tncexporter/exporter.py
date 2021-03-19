@@ -116,7 +116,7 @@ def parse_packet(raw_packet):
             latlon_match = re.search(latlon_regex, data_string)
             if latlon_match is not None:
                 raw_lat = latlon_match[1]
-                lat_direction= latlon_match[2]
+                lat_direction = latlon_match[2]
                 raw_lon = latlon_match[3]
                 lon_direction = latlon_match[4]
                 if lat_direction == 'N':
@@ -127,7 +127,7 @@ def parse_packet(raw_packet):
                     latitude = None
                 if lon_direction == 'E':
                     longitude = float(raw_lon)
-                elif lat_direction == 'W':
+                elif lon_direction == 'W':
                     longitude = -float(raw_lon)
                 else:
                     longitude = None
