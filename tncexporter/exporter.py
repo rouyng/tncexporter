@@ -8,9 +8,14 @@ process_packets is called from the main application loop
 from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, RF_PACKET_DISTANCE
 from math import asin, cos, sin, sqrt, radians
 from typing import TypedDict
+import asyncio
 import datetime
 import logging
 import re
+from .listener import Listener
+import aiohttp
+from asyncio.events import AbstractEventLoop
+from aioprometheus import Service
 
 
 class PacketInfo(TypedDict):
@@ -25,146 +30,161 @@ class PacketInfo(TypedDict):
     hops_path: list  # list of hop callsigns
 
 
-def haversine_distance(
-    pos1: tuple,
-    pos2: tuple,
-    radius: float = 6371.0e3
-) -> float:
-    """
-    Calculate the distance between two points on a sphere (e.g. Earth).
-    If no radius is provided then the default Earth radius, in meters, is
-    used.
-    The haversine formula provides great-circle distances between two points
-    on a sphere from their latitudes and longitudes using the law of
-    haversines, relating the sides and angles of spherical triangles.
-    Based on the haversine_distance function used here:
-    https://github.com/claws/dump1090-exporter/blob/master/src/dump1090exporter/exporter.py
-    `Reference <https://en.wikipedia.org/wiki/Haversine_formula>`_
-    :param pos1: a tuple defining (lat, lon) in decimal degrees
-    :param pos2: a tuple defining (lat, lon) in decimal degrees
-    :param radius: radius of sphere in meters.
-    :returns: distance between two points in meters.
-    :rtype: float
-    """
-    lat1, lon1, lat2, lon2 = [radians(x) for x in (*pos1, *pos2)]
+class TNCExporter:
+    def __init__(
+            self,
+            tnc_url: str,
+            host: str = None,
+            port: int = 9105,
+            stats_interval: int = 60,
+            summary_interval: int = 60,
+            origin: tuple = None,
+            fetch_timeout: float = 2.0,
+            loop: AbstractEventLoop = None) -> None:
+        self.listener = Listener(tnc_url)
+        self.loop = loop or asyncio.get_event_loop()
+        self.host = host
+        self.port = port
 
-    hav = (
-        sin((lat2 - lat1) / 2.0) ** 2
-        + cos(lat1) * cos(lat2) * sin((lon2 - lon1) / 2.0) ** 2
-    )
-    distance = 2 * radius * asin(sqrt(hav))
-    return distance
+    @staticmethod
+    def haversine_distance(
+            pos1: tuple,
+            pos2: tuple,
+            radius: float = 6371.0e3
+    ) -> float:
+        """
+        Calculate the distance between two points on a sphere (e.g. Earth).
+        If no radius is provided then the default Earth radius, in meters, is
+        used.
+        The haversine formula provides great-circle distances between two points
+        on a sphere from their latitudes and longitudes using the law of
+        haversines, relating the sides and angles of spherical triangles.
+        Based on the haversine_distance function used here:
+        https://github.com/claws/dump1090-exporter/blob/master/src/dump1090exporter/exporter.py
+        `Reference <https://en.wikipedia.org/wiki/Haversine_formula>`_
+        :param pos1: a tuple defining (lat, lon) in decimal degrees
+        :param pos2: a tuple defining (lat, lon) in decimal degrees
+        :param radius: radius of sphere in meters.
+        :returns: distance between two points in meters.
+        :rtype: float
+        """
+        lat1, lon1, lat2, lon2 = [radians(x) for x in (*pos1, *pos2)]
 
+        hav = (
+                sin((lat2 - lat1) / 2.0) ** 2
+                + cos(lat1) * cos(lat2) * sin((lon2 - lon1) / 2.0) ** 2
+        )
+        distance = 2 * radius * asin(sqrt(hav))
+        return distance
 
-def parse_packet(raw_packet):
-    """Parse packet bytestring, create a PacketInfo object
-    :param raw_packet: packet bytestrings
-    :returns: Typed dictionary containing metadata
-    :rtype: PacketInfo"""
-    len_data = int.from_bytes(raw_packet[28:32], signed=False, byteorder="little")
-    frame_type = chr(raw_packet[4])
-    try:
-        call_from = raw_packet[8:18].decode("utf-8").strip('\x00')
-    except UnicodeDecodeError:
-        call_from = None
-        logging.debug(f"Unicode error when decoding: {raw_packet[8:18]}")
-    try:
-        call_to = raw_packet[18:28].decode("utf-8").strip('\x00')
-    except UnicodeDecodeError:
-        call_to = None
-        logging.debug(f"Unicode error when decoding: {raw_packet[18:28]}")
+    @staticmethod
+    def parse_packet(raw_packet):
+        """Parse packet bytestring, create a PacketInfo object
+        :param raw_packet: packet bytestrings
+        :returns: Typed dictionary containing metadata
+        :rtype: PacketInfo"""
+        len_data = int.from_bytes(raw_packet[28:32], signed=False, byteorder="little")
+        frame_type = chr(raw_packet[4])
+        try:
+            call_from = raw_packet[8:18].decode("utf-8").strip('\x00')
+        except UnicodeDecodeError:
+            call_from = None
+            logging.debug(f"Unicode error when decoding: {raw_packet[8:18]}")
+        try:
+            call_to = raw_packet[18:28].decode("utf-8").strip('\x00')
+        except UnicodeDecodeError:
+            call_to = None
+            logging.debug(f"Unicode error when decoding: {raw_packet[18:28]}")
 
-    timestamp = None
-    latitude = None
-    longitude = None
-    hops = []
-    try:
-        data_string = raw_packet[36:].decode("utf-8").strip('\x00')
-        # parse timestamp
-        time_match = re.search("[0-2][0-9]:[0-5][0-9]:[0-5][0-9]", data_string)
-        if time_match is not None:
+        timestamp = None
+        latitude = None
+        longitude = None
+        hops = []
+        try:
+            data_string = raw_packet[36:].decode("utf-8").strip('\x00')
+            # parse timestamp
+            time_match = re.search("[0-2][0-9]:[0-5][0-9]:[0-5][0-9]", data_string)
+            if time_match is not None:
+                try:
+                    raw_hour = time_match.group()[0:2]
+                    raw_min = time_match.group()[3:5]
+                    raw_sec = time_match.group()[6:8]
+                    timestamp = datetime.time(hour=int(raw_hour),
+                                              minute=int(raw_min),
+                                              second=int(raw_sec))
+                except TypeError:
+                    pass
             try:
-                raw_hour = time_match.group()[0:2]
-                raw_min = time_match.group()[3:5]
-                raw_sec = time_match.group()[6:8]
-                timestamp = datetime.time(hour=int(raw_hour),
-                                          minute=int(raw_min),
-                                          second=int(raw_sec))
-            except TypeError:
+                # parse list of hops
+                hops_string = re.findall("(?:Via )(.*?)(?: <)", data_string)[0]
+                # tuple of non-WIDE path types that don't represent hops through a digipeater
+                # TODO: research additional paths that may appear in packets?
+                path_types = ('RELAY',
+                              'BEACON',
+                              'ARISS')
+                # regex matching all WIDE paths like WIDE1, WIDE 1-1, WIDE2-2 etc
+                wide_regex = "^WIDE(\b|([0-9]-[0-9])|[0-9])"
+                # determine if the packet was digipeated by making a list of hops that dont
+                # match known "path" hop types
+                hops = [h for h in hops_string.split(',') if h not in path_types
+                        and re.fullmatch(wide_regex, h) is None]
+                logging.info("Hops:", hops)
+            except IndexError:
                 pass
-        try:
-            # parse list of hops
-            hops_string = re.findall("(?:Via )(.*?)(?: <)", data_string)[0]
-            # tuple of non-WIDE path types that don't represent hops through a digipeater
-            # TODO: research additional paths that may appear in packets?
-            path_types = ('RELAY',
-                          'BEACON',
-                          'ARISS')
-            # regex matching all WIDE paths like WIDE1, WIDE 1-1, WIDE2-2 etc
-            wide_regex = "^WIDE(\b|([0-9]-[0-9])|[0-9])"
-            # determine if the packet was digipeated by making a list of hops that dont
-            # match known "path" hop types
-            hops = [h for h in hops_string.split(',') if h not in path_types
-                    and re.fullmatch(wide_regex, h) is None]
-            logging.info("Hops:", hops)
-        except IndexError:
-            pass
-        try:
-            # parse latitude and longitude from position packets
-            latlon_regex = r"([0-9][0-9][0-9][0-9]\.[0-9][0-9])(N|S).{0,2}" \
-                           r"([0-1][0-9][0-9][0-9][0-9]\.[0-9][0-9])(E|W)"
-            latlon_match = re.search(latlon_regex, data_string)
-            if latlon_match is not None:
-                raw_lat = latlon_match[1]
-                lat_direction = latlon_match[2]
-                raw_lon = latlon_match[3]
-                lon_direction = latlon_match[4]
-                if lat_direction == 'N':
-                    latitude = float(raw_lat)
-                elif lat_direction == 'S':
-                    latitude = -float(raw_lat)
-                else:
-                    latitude = None
-                if lon_direction == 'E':
-                    longitude = float(raw_lon)
-                elif lon_direction == 'W':
-                    longitude = -float(raw_lon)
-                else:
-                    longitude = None
-        except (IndexError, ValueError):
-            pass
+            try:
+                # parse latitude and longitude from position packets
+                latlon_regex = r"([0-9][0-9][0-9][0-9]\.[0-9][0-9])(N|S).{0,2}" \
+                               r"([0-1][0-9][0-9][0-9][0-9]\.[0-9][0-9])(E|W)"
+                latlon_match = re.search(latlon_regex, data_string)
+                if latlon_match is not None:
+                    raw_lat = latlon_match[1]
+                    lat_direction = latlon_match[2]
+                    raw_lon = latlon_match[3]
+                    lon_direction = latlon_match[4]
+                    if lat_direction == 'N':
+                        latitude = float(raw_lat)
+                    elif lat_direction == 'S':
+                        latitude = -float(raw_lat)
+                    else:
+                        latitude = None
+                    if lon_direction == 'E':
+                        longitude = float(raw_lon)
+                    elif lon_direction == 'W':
+                        longitude = -float(raw_lon)
+                    else:
+                        longitude = None
+            except (IndexError, ValueError):
+                pass
 
-    except UnicodeDecodeError:
-        logging.error("Error decoding bytes into unicode")
+        except UnicodeDecodeError:
+            logging.error("Error decoding bytes into unicode")
 
-    return PacketInfo(
-        frame_type=frame_type,
-        data_len=len_data,
-        call_from=call_from,
-        call_to=call_to,
-        timestamp=timestamp,
-        hops_count=len(hops),
-        hops_path=hops,
-        lat_lon=(latitude, longitude)
-    )
+        return PacketInfo(
+            frame_type=frame_type,
+            data_len=len_data,
+            call_from=call_from,
+            call_to=call_to,
+            timestamp=timestamp,
+            hops_count=len(hops),
+            hops_path=hops,
+            lat_lon=(latitude, longitude)
+        )
 
+    def update_metrics(self, packet_info: PacketInfo, tnc_latlon: tuple):
+        """
+        Function that processes packet metadata and updates Prometheus metrics.
 
-def update_metrics(packet_info: PacketInfo, tnc_latlon: tuple):
-    """
-    Function that processes packet metadata and updates Prometheus metrics.
-
-    :param packet_info: a list of PacketInfo objects containing packet metadata
-    :param tnc_latlon: a tuple defining (lat, lon) of the TNC in decimal degrees
-    """
-    if packet_info['frame_type'].lower() == 't':
-        # if a packet is transmitted, increment PACKET_TX
-        PACKET_TX.inc()
-    else:
-        # if a packet is received and decoded, increment PACKET_RX metric
-        PACKET_RX.inc()
-        if packet_info['lat_lon'] is not None:
-            # calculate distance between TNC location and packet's reported lat/lon
-            distance_from_tnc = haversine_distance(pos1=tnc_latlon, pos2=packet_info['lat_lon'])
-            PACKET_DISTANCE.observe(distance_from_tnc)
-            # TODO: determine if packet was digipeated to increment RF_PACKET_DISTANCE
-
+        :param packet_info: a list of PacketInfo objects containing packet metadata
+        :param tnc_latlon: a tuple defining (lat, lon) of the TNC in decimal degrees
+        """
+        if packet_info['frame_type'].lower() == 't':
+            # if a packet is transmitted, increment PACKET_TX
+            PACKET_TX.inc()
+        else:
+            # if a packet is received and decoded, increment PACKET_RX metric
+            PACKET_RX.inc()
+            if packet_info['lat_lon'] is not None:
+                # calculate distance between TNC location and packet's reported lat/lon
+                distance_from_tnc = haversine_distance(pos1=tnc_latlon, pos2=packet_info['lat_lon'])
+                PACKET_DISTANCE.observe(distance_from_tnc)
+                # TODO: determine if packet was digipeated to increment RF_PACKET_DISTANCE

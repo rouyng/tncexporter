@@ -7,6 +7,8 @@ name = "pypi"
 prometheus-client = "*"
 pytest = "*"
 flake8 = "*"
+aiohttp = "*"
+aioprometheus = "*"
 
 [dev-packages]
 

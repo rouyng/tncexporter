@@ -4,7 +4,7 @@ This module defines the prometheus metrics to be exported.
 All metrics ending with RECENT record a total over the time span set in the "summary_interval"
 parameter of tncexporter.
 """
-from prometheus_client import Counter, Gauge, Histogram, Summary
+from aioprometheus import Counter, Gauge, Summary
 
 # Metrics tracking counts of frames received/decoded or transmitted
 PACKET_RX = Counter("packet_rx",
