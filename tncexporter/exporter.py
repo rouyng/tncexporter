@@ -17,6 +17,8 @@ import aiohttp
 from asyncio.events import AbstractEventLoop
 from aioprometheus import Service
 
+logger = logging.getLogger(__name__)
+
 
 class PacketInfo(TypedDict):
     """Typed dictionary for defining AX.25 packet metadata"""
@@ -38,13 +40,17 @@ class TNCExporter:
             port: int = 9105,
             stats_interval: int = 60,
             summary_interval: int = 60,
-            origin: tuple = None,
-            fetch_timeout: float = 2.0,
+            receiver_location: tuple = None,
             loop: AbstractEventLoop = None) -> None:
         self.listener = Listener(tnc_url)
         self.loop = loop or asyncio.get_event_loop()
         self.host = host
         self.port = port
+        self.stats_interval = datetime.timedelta(seconds=stats_interval)
+        self.summary_interval = datetime.timedelta(seconds=summary_interval)
+        self.location = receiver_location
+        self.metrics_task = None
+        self.server = Service()
 
     @staticmethod
     def haversine_distance(
@@ -172,11 +178,45 @@ class TNCExporter:
             lat_lon=(latitude, longitude)
         )
 
-    def update_metrics(self, packet_info: PacketInfo, tnc_latlon: tuple):
+    async def start(self) -> None:
+        """ Start the monitor """
+        await self.server.start(addr=self.host, port=self.port)
+        logger.info(f"serving dump1090 prometheus metrics on: {self.svr.metrics_url}")
+        self.metrics_task = asyncio.ensure_future(self.metric_updater())
+
+    async def stop(self) -> None:
+        """ Stop the monitor """
+        if self.metrics_task:
+            self.metrics_task.cancel()
+            try:
+                await self.metrics_task
+            except asyncio.CancelledError:
+                pass
+            self.metrics_task = None
+
+        await self.svr.stop()
+
+    async def metric_updater(self):
+        while True:
+            start = datetime.datetime.now()
+            try:
+                # TODO: fetch list of packets
+                packets = []
+                for p in packets:
+                    parsed = self.parse_packet(p)
+                    self.packet_metrics(parsed, self.location)
+            except Exception as exc:
+                logger.error(f"Error processing metrics from packets: {exc}")
+            # wait until next collection time
+            end = datetime.datetime.now()
+            wait_seconds = (start + self.stats_interval - end).total_seconds()
+            await asyncio.sleep(wait_seconds)
+
+    def packet_metrics(self, packet_info: PacketInfo, tnc_latlon: tuple):
         """
         Function that processes packet metadata and updates Prometheus metrics.
 
-        :param packet_info: a list of PacketInfo objects containing packet metadata
+        :param packet_info: a PacketInfo object containing packet metadata
         :param tnc_latlon: a tuple defining (lat, lon) of the TNC in decimal degrees
         """
         if packet_info['frame_type'].lower() == 't':
@@ -187,6 +227,6 @@ class TNCExporter:
             PACKET_RX.inc()
             if packet_info['lat_lon'] is not None:
                 # calculate distance between TNC location and packet's reported lat/lon
-                distance_from_tnc = haversine_distance(pos1=tnc_latlon, pos2=packet_info['lat_lon'])
+                distance_from_tnc = self.haversine_distance(pos1=tnc_latlon, pos2=packet_info['lat_lon'])
                 PACKET_DISTANCE.observe(distance_from_tnc)
                 # TODO: determine if packet was digipeated to increment RF_PACKET_DISTANCE
