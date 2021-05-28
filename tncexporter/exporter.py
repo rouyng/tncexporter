@@ -193,8 +193,7 @@ class TNCExporter:
             except asyncio.CancelledError:
                 pass
             self.metrics_task = None
-
-        await self.svr.stop()
+        await self.server.stop()
 
     async def metric_updater(self):
         while True:
