@@ -229,4 +229,5 @@ class TNCExporter:
                 # calculate distance between TNC location and packet's reported lat/lon
                 distance_from_tnc = self.haversine_distance(pos1=tnc_latlon, pos2=packet_info['lat_lon'])
                 PACKET_DISTANCE.observe(distance_from_tnc)
-                # TODO: determine if packet was digipeated to increment RF_PACKET_DISTANCE
+                if packet_info['hops_count'] == 0:
+                    RF_PACKET_DISTANCE.observe(distance_from_tnc)
