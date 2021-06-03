@@ -9,6 +9,8 @@ import logging
 import exporter
 from listener import Listener
 import asyncio
+from .exporter import TNCExporter
+
 
 def main():
     """Run prometheus exporter"""
@@ -80,16 +82,29 @@ def main():
     else:
         logging.basicConfig(level=logging.INFO)
 
+    location = None
+    if args.latitude and args.longitude:
+        # TODO: validate lat/lon values and convert to whatever type is needed by TNCExporter
+        location = (args.latitude, args.longitude)
+
     loop = asyncio.get_event_loop()
-
-    tnc_listener = Listener(args.tnc_url)
-
-
-
-    while True:
-        exporter.process_packets(tnc_latlon=(args.latitude, args.longitude))
-        # wait x seconds before generating metrics again
-        time.sleep(args.interval)
+    exp = TNCExporter(
+        tnc_url=args.tnc_url,
+        host=args.host,
+        port=args.port,
+        stats_interval=args.update_interval,
+        summary_interval=args.summary_interval,
+        receiver_location=location
+    )
+    loop.run_until_complete(exp.start())
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        loop.run_until_complete(exp.stop())
+    loop.stop()
+    loop.close()
 
 
 if __name__ == "__main__":
