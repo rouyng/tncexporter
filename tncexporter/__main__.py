@@ -44,8 +44,8 @@ def main():
         type=int,
         dest="interval",
         default=60,
-        help="The number of seconds between updates of TNC metrics. This determines the rate at which "
-             "the prometheus client exposes new metrics. Default is 60 seconds",
+        help="The number of seconds between updates of TNC metrics. This determines the rate at "
+             "which the prometheus client exposes new metrics. Default is 60 seconds",
     )
     parser.add_argument(
         "--summary-interval",
@@ -53,8 +53,9 @@ def main():
         type=int,
         dest="summary_interval",
         default=300,
-        help="The number of seconds over which to calculate recent activity summary metrics. Metrics"
-             "that end with _recent are affected by this parameter. Default is 300 seconds (5 minutes)",
+        help="The number of seconds over which to calculate recent activity summary metrics. "
+             "Metrics that end with _recent are affected by this parameter. Default is 300 seconds"
+             " (5 minutes)",
     )
     parser.add_argument(
         "--latitude",
