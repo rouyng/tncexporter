@@ -9,7 +9,7 @@ import logging
 import exporter
 from listener import Listener
 import asyncio
-from .exporter import TNCExporter
+from exporter import TNCExporter
 
 
 def main():
