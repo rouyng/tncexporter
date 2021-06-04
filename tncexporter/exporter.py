@@ -141,7 +141,7 @@ class TNCExporter:
                 # match known "path" hop types
                 hops = [h for h in hops_string.split(',') if h not in path_types
                         and re.fullmatch(wide_regex, h) is None]
-                logging.info("Hops:", hops)
+                logging.info(f"Hops: {hops}")
             except IndexError:
                 pass
             try:
