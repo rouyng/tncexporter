@@ -42,16 +42,19 @@ class TNCExporter:
             summary_interval: int = 60,
             receiver_location: tuple = None,
             loop: AbstractEventLoop = None) -> None:
-        # TODO: try/except to handle exceptions generated when Listener fails to connect
-        self.listener = Listener(tnc_url)
-        self.loop = loop or asyncio.get_event_loop()
-        self.host = host
-        self.port = port
-        self.stats_interval = datetime.timedelta(seconds=stats_interval)
-        self.summary_interval = datetime.timedelta(seconds=summary_interval)
-        self.location = receiver_location
-        self.metrics_task = None
-        self.server = Service()
+        try:
+            self.listener = Listener(tnc_url)
+        except ConnectionRefusedError:
+            logging.error("Could not create TNC listener")
+        else:
+            self.loop = loop or asyncio.get_event_loop()
+            self.host = host
+            self.port = port
+            self.stats_interval = datetime.timedelta(seconds=stats_interval)
+            self.summary_interval = datetime.timedelta(seconds=summary_interval)
+            self.location = receiver_location
+            self.metrics_task = None
+            self.server = Service()
 
     @staticmethod
     def haversine_distance(
