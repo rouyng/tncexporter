@@ -34,6 +34,7 @@ class Listener:
         # TODO: send "R" packet, receive version number
         # TODO: send "g" packet, receive port capabilities
         self.client_socket.sendall(MONITOR_REQUEST)  # ask tnc to send monitor packets
+        # TODO: handle failed connections by raising an exception to be handled by TNCExporter obj
 
     def receive_packet(self):
         """Receive a packet from the AGWPE API and append it to the packet list as a byte string"""
@@ -47,6 +48,12 @@ class Listener:
             bytes_recv += len(chunk)
         self.packets.append(chunks)
         logging.debug(f"Received packet, total {len(self.packets)}")
+
+    def read_packet_queue(self):
+        """Returns packets in queue for exporter processing and clears queue"""
+        packet_batch = self.packets.copy()
+        self.packets = []
+        return packet_batch
 
     def start(self):
         """This function runs after a connection is established and continuously receives

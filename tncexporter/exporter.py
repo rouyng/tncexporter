@@ -42,6 +42,7 @@ class TNCExporter:
             summary_interval: int = 60,
             receiver_location: tuple = None,
             loop: AbstractEventLoop = None) -> None:
+        # TODO: try/except to handle exceptions generated when Listener fails to connect
         self.listener = Listener(tnc_url)
         self.loop = loop or asyncio.get_event_loop()
         self.host = host
@@ -183,6 +184,7 @@ class TNCExporter:
         await self.server.start(addr=self.host, port=self.port)
         logger.info(f"serving dump1090 prometheus metrics on: {self.svr.metrics_url}")
         self.metrics_task = asyncio.ensure_future(self.metric_updater())
+        # TODO: add listener_task
 
     async def stop(self) -> None:
         """ Stop the monitor """
@@ -199,12 +201,12 @@ class TNCExporter:
         while True:
             start = datetime.datetime.now()
             try:
-                # TODO: fetch list of packets
-                packets = []
+                packets = self.listener.read_packet_queue()
                 for p in packets:
                     parsed = self.parse_packet(p)
                     self.packet_metrics(parsed, self.location)
             except Exception as exc:
+                # TODO: handle more specific exceptions
                 logger.error(f"Error processing metrics from packets: {exc}")
             # wait until next collection time
             end = datetime.datetime.now()
