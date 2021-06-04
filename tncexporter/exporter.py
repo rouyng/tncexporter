@@ -54,6 +54,7 @@ class TNCExporter:
             self.summary_interval = datetime.timedelta(seconds=summary_interval)
             self.location = receiver_location
             self.metrics_task = None
+            self.listener_task = None
             self.server = Service()
 
     @staticmethod
@@ -187,7 +188,7 @@ class TNCExporter:
         await self.server.start(addr=self.host, port=self.port)
         logger.info(f"serving dump1090 prometheus metrics on: {self.svr.metrics_url}")
         self.metrics_task = asyncio.ensure_future(self.metric_updater())
-        # TODO: add listener_task
+        self.listener_task = asyncio.ensure_future(self.listener.receive_packets())
 
     async def stop(self) -> None:
         """ Stop the monitor """
