@@ -43,7 +43,6 @@ class Listener:
             # TODO: send "R" packet, receive version number
             # TODO: send "g" packet, receive port capabilities
             self.client_socket.sendall(MONITOR_REQUEST)  # ask tnc to send monitor packets
-            # TODO: handle failed connections by raising an exception to be handled by TNCExporter
 
     async def receive_packets(self):
         """Receive a packet from the AGWPE API and append it to the packet list as a byte string"""
