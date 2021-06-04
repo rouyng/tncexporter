@@ -42,7 +42,7 @@ def main():
         "--update-interval",
         metavar="<stats data refresh interval>",
         type=int,
-        dest="interval",
+        dest="update_interval",
         default=60,
         help="The number of seconds between updates of TNC metrics. This determines the rate at "
              "which the prometheus client exposes new metrics. Default is 60 seconds",
