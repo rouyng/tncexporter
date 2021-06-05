@@ -56,6 +56,7 @@ class TNCExporter:
             self.metrics_task = None
             self.listener_task = None
             self.server = Service()
+            self.register_metrics((PACKET_RX, PACKET_TX, PACKET_DISTANCE, RF_PACKET_DISTANCE))
 
     @staticmethod
     def haversine_distance(
@@ -183,6 +184,11 @@ class TNCExporter:
             lat_lon=(latitude, longitude)
         )
 
+    def register_metrics(self, metrics_list: tuple):
+        """Register metrics  with aioprometheus service"""
+        for m in metrics_list:
+            self.server.register(m)
+
     async def start(self) -> None:
         """ Start the monitor """
         await self.server.start(addr=self.host, port=self.port)
@@ -218,7 +224,7 @@ class TNCExporter:
                     self.packet_metrics(parsed, self.location)
             except Exception as exc:
                 # TODO: handle more specific exceptions
-                logger.error(f"Error processing metrics from packets: {exc}")
+                logger.exception(f"Error processing metrics from packets")
             # wait until next collection time
             end = datetime.datetime.now()
             wait_seconds = (start + self.stats_interval - end).total_seconds()
@@ -238,7 +244,7 @@ class TNCExporter:
         else:
             # if a packet is received and decoded, increment PACKET_RX metric
             PACKET_RX.inc({'type': 'unknown'})
-            if packet_info['lat_lon'] is not None:
+            if packet_info['lat_lon'][0] is not None and tnc_latlon[0] is not None:
                 # calculate distance between TNC location and packet's reported lat/lon
                 distance_from_tnc = self.haversine_distance(pos1=tnc_latlon, pos2=packet_info['lat_lon'])
                 PACKET_DISTANCE.observe({'type': 'unknown'}, distance_from_tnc)
