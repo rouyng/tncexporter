@@ -47,6 +47,7 @@ class Listener:
     async def receive_packets(self):
         """Receive a packet from the AGWPE API and append it to the packet list as a byte string"""
         while True:
+            # TODO: handle ConnectionResetError
             chunks = b""
             bytes_recv = 0
             while bytes_recv < 36:
