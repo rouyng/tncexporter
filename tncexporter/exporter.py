@@ -58,6 +58,36 @@ class TNCExporter:
             self.server = Service()
             self.register_metrics((PACKET_RX, PACKET_TX, PACKET_DISTANCE, RF_PACKET_DISTANCE))
 
+    def register_metrics(self, metrics_list: tuple):
+        """Register metrics  with aioprometheus service"""
+        for m in metrics_list:
+            self.server.register(m)
+
+    async def start(self) -> None:
+        """ Start the monitor """
+        await self.server.start(addr=self.host, port=self.port)
+        logger.info(f"serving dump1090 prometheus metrics on: {self.server.metrics_url}")
+        self.metrics_task = asyncio.create_task(self.metric_updater())
+        self.listener_task = asyncio.create_task(self.listener.receive_packets())
+
+    async def stop(self) -> None:
+        """ Stop the monitor """
+        if self.metrics_task:
+            self.metrics_task.cancel()
+            try:
+                await self.metrics_task
+            except asyncio.CancelledError:
+                pass
+            self.metrics_task = None
+        if self.listener_task:
+            self.listener_task.cancel()
+            try:
+                await self.listener_task
+            except asyncio.CancelledError:
+                pass
+            self.listener_task = None
+        await self.server.stop()
+
     @staticmethod
     def haversine_distance(
             pos1: tuple,
@@ -190,37 +220,10 @@ class TNCExporter:
         logging.debug(f"Decoded packet: {decoded_info}")
         return decoded_info
 
-    def register_metrics(self, metrics_list: tuple):
-        """Register metrics  with aioprometheus service"""
-        for m in metrics_list:
-            self.server.register(m)
-
-    async def start(self) -> None:
-        """ Start the monitor """
-        await self.server.start(addr=self.host, port=self.port)
-        logger.info(f"serving dump1090 prometheus metrics on: {self.server.metrics_url}")
-        self.metrics_task = asyncio.create_task(self.metric_updater())
-        self.listener_task = asyncio.create_task(self.listener.receive_packets())
-
-    async def stop(self) -> None:
-        """ Stop the monitor """
-        if self.metrics_task:
-            self.metrics_task.cancel()
-            try:
-                await self.metrics_task
-            except asyncio.CancelledError:
-                pass
-            self.metrics_task = None
-        if self.listener_task:
-            self.listener_task.cancel()
-            try:
-                await self.listener_task
-            except asyncio.CancelledError:
-                pass
-            self.listener_task = None
-        await self.server.stop()
-
     async def metric_updater(self):
+        """Asynchronous coroutine function that reads the queue of received packets and calls
+        packet_metrics on each packet in the queue. Runs on an interval defined by the update
+        interval set when starting the exporter."""
         while True:
             start = datetime.datetime.now()
             try:
@@ -238,7 +241,8 @@ class TNCExporter:
 
     def packet_metrics(self, packet_info: PacketInfo, tnc_latlon: tuple):
         """
-        Function that processes packet metadata and updates Prometheus metrics.
+        Function that processes individual packet metadata from a PacketInfo object
+         and updates Prometheus metrics.
 
         :param packet_info: a PacketInfo object containing packet metadata
         :param tnc_latlon: a tuple defining (lat, lon) of the TNC in decimal degrees
