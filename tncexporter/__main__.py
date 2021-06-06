@@ -62,14 +62,16 @@ def main():
         metavar="<tnc latitude>",
         type=float,
         default=None,
-        help="The latitude of the TNC position",
+        help="The latitude of the TNC position in decimal format. North latitudes are positive,"
+             "south are negative."
     )
     parser.add_argument(
         "--longitude",
         metavar="<receiver longitude>",
         type=float,
         default=None,
-        help="The longitude of the TNC position",
+        help="The longitude of the TNC position in decimal format. East longitudes are positive, "
+             "west are negative.",
     )
     parser.add_argument(
         "--debug", action="store_true", default=False, help="Print debug output"
@@ -85,8 +87,14 @@ def main():
 
     location = None
     if args.latitude and args.longitude:
-        # TODO: validate lat/lon values and convert to whatever type is needed by TNCExporter
-        location = (args.latitude, args.longitude)
+        try:
+            location = (float(args.latitude), float(args.longitude))
+            logging.debug(f"TNC location set at {location}")
+        except ValueError:
+            logging.warning("Error interpreting latitude/longitude values of TNC. Distance metrics"
+                            "will not be exported.")
+    else:
+        logging.warning("Missing latitude/longitude values. Distance metrics will not be exported.")
 
     loop = asyncio.get_event_loop()
     exp = TNCExporter(

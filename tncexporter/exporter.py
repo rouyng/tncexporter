@@ -114,6 +114,8 @@ class TNCExporter:
         hops = []
         try:
             data_string = raw_packet[36:].decode("utf-8").strip('\x00')
+            logging.debug("Parsing data from the following string:")
+            logging.debug(data_string)
             # parse timestamp
             time_match = re.search("[0-2][0-9]:[0-5][0-9]:[0-5][0-9]", data_string)
             if time_match is not None:
@@ -142,7 +144,6 @@ class TNCExporter:
                 # match known "path" hop types
                 hops = [h for h in hops_string.split(',') if h not in path_types
                         and re.fullmatch(wide_regex, h) is None]
-                logging.info(f"Hops: {hops}")
             except IndexError:
                 pass
             try:
@@ -151,29 +152,32 @@ class TNCExporter:
                                r"([0-1][0-9][0-9][0-9][0-9]\.[0-9][0-9])(E|W)"
                 latlon_match = re.search(latlon_regex, data_string)
                 if latlon_match is not None:
+                    logging.debug(f"latlon regex results: {latlon_match.groups()}")
                     raw_lat = latlon_match[1]
                     lat_direction = latlon_match[2]
                     raw_lon = latlon_match[3]
                     lon_direction = latlon_match[4]
                     if lat_direction == 'N':
-                        latitude = float(raw_lat)
+                        latitude = float(raw_lat) / 100
                     elif lat_direction == 'S':
-                        latitude = -float(raw_lat)
+                        latitude = -float(raw_lat) / 100
                     else:
                         latitude = None
                     if lon_direction == 'E':
-                        longitude = float(raw_lon)
+                        longitude = float(raw_lon) / 100
                     elif lon_direction == 'W':
-                        longitude = -float(raw_lon)
+                        longitude = -float(raw_lon) / 100
                     else:
                         longitude = None
+                else:
+                    logging.debug("No latitude/longitude values found in packet")
             except (IndexError, ValueError):
                 pass
 
         except UnicodeDecodeError:
             logging.error("Error decoding bytes into unicode")
 
-        return PacketInfo(
+        decoded_info = PacketInfo(
             frame_type=frame_type,
             data_len=len_data,
             call_from=call_from,
@@ -183,6 +187,8 @@ class TNCExporter:
             hops_path=hops,
             lat_lon=(latitude, longitude)
         )
+        logging.debug(f"Decoded packet: {decoded_info}")
+        return decoded_info
 
     def register_metrics(self, metrics_list: tuple):
         """Register metrics  with aioprometheus service"""
@@ -245,9 +251,10 @@ class TNCExporter:
         else:
             # if a packet is received and decoded, increment PACKET_RX metric
             PACKET_RX.inc({'ax25 frame type': frame_type})
-            if packet_info['lat_lon'] is not None and tnc_latlon is not None:
+            if all([v is not None for v in packet_info['lat_lon']]) and tnc_latlon is not None:
                 # calculate distance between TNC location and packet's reported lat/lon
-                distance_from_tnc = self.haversine_distance(pos1=tnc_latlon, pos2=packet_info['lat_lon'])
+                distance_from_tnc = self.haversine_distance(pos1=tnc_latlon,
+                                                            pos2=packet_info['lat_lon'])
                 PACKET_DISTANCE.observe({'type': 'unknown'}, distance_from_tnc)
                 if packet_info['hops_count'] == 0:
                     RF_PACKET_DISTANCE.observe({'type': 'unknown'}, distance_from_tnc)
