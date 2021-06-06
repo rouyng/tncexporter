@@ -193,8 +193,8 @@ class TNCExporter:
         """ Start the monitor """
         await self.server.start(addr=self.host, port=self.port)
         logger.info(f"serving dump1090 prometheus metrics on: {self.server.metrics_url}")
-        self.metrics_task = asyncio.ensure_future(self.metric_updater())
-        self.listener_task = asyncio.ensure_future(self.listener.receive_packets())
+        self.metrics_task = asyncio.create_task(self.metric_updater())
+        self.listener_task = asyncio.create_task(self.listener.receive_packets())
 
     async def stop(self) -> None:
         """ Stop the monitor """
@@ -244,7 +244,7 @@ class TNCExporter:
         else:
             # if a packet is received and decoded, increment PACKET_RX metric
             PACKET_RX.inc({'type': 'unknown'})
-            if packet_info['lat_lon'][0] is not None and tnc_latlon[0] is not None:
+            if packet_info['lat_lon'] is not None and tnc_latlon is not None:
                 # calculate distance between TNC location and packet's reported lat/lon
                 distance_from_tnc = self.haversine_distance(pos1=tnc_latlon, pos2=packet_info['lat_lon'])
                 PACKET_DISTANCE.observe({'type': 'unknown'}, distance_from_tnc)
