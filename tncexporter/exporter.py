@@ -237,13 +237,14 @@ class TNCExporter:
         :param packet_info: a PacketInfo object containing packet metadata
         :param tnc_latlon: a tuple defining (lat, lon) of the TNC in decimal degrees
         """
-        if packet_info['frame_type'].lower() == 't':
+        frame_type = packet_info['frame_type'].upper()
+        if frame_type == 'T':
             # if a packet is transmitted, increment PACKET_TX
             # TODO: more informative labels
             PACKET_TX.inc({'type': 'unknown'})
         else:
             # if a packet is received and decoded, increment PACKET_RX metric
-            PACKET_RX.inc({'type': 'unknown'})
+            PACKET_RX.inc({'ax25 frame type': frame_type})
             if packet_info['lat_lon'] is not None and tnc_latlon is not None:
                 # calculate distance between TNC location and packet's reported lat/lon
                 distance_from_tnc = self.haversine_distance(pos1=tnc_latlon, pos2=packet_info['lat_lon'])

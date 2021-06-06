@@ -25,10 +25,4 @@ RF_PACKET_DISTANCE = Summary("rf_frame_distance",
 MAX_DISTANCE_RECENT = Gauge("max_range_recent",
                             "Maximum range of position frames received over last time period")
 
-# Metrics breaking down frame RX/TX activity by type or content
-FRAME_RX_UI = Counter("frame_rx_ui",
-                      "Number of monitored unproto (UI) frames received")
-FRAME_RX_S = Counter("frame_rx_s",
-                     "Number of monitored S/U frames received")
-FRAME_RX_I = Counter("frame_rx_i",
-                     "Number of monitored I frames received")
+
