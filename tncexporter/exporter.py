@@ -235,7 +235,7 @@ class TNCExporter:
             except Exception as exc:
                 # TODO: handle more specific exceptions
                 logger.exception(f"Error processing metrics from packets")
-            # wait until next collection time
+            # wait until next metric collection time
             end = datetime.datetime.now()
             wait_seconds = (start + self.stats_interval - end).total_seconds()
             await asyncio.sleep(wait_seconds)
@@ -255,7 +255,8 @@ class TNCExporter:
             PACKET_TX.inc({'type': 'unknown'})
         else:
             # if a packet is received and decoded, increment PACKET_RX metric
-            PACKET_RX.inc({'ax25 frame type': frame_type})
+            digipeated = "Digi" if packet_info['hops_count'] > 0 else "Simplex"
+            PACKET_RX.inc({'ax25 frame type': frame_type, 'path': digipeated})
             if all([v is not None for v in packet_info['lat_lon']]) and tnc_latlon is not None:
                 # calculate distance between TNC location and packet's reported lat/lon
                 distance_from_tnc = self.haversine_distance(pos1=tnc_latlon,
