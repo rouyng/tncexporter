@@ -44,6 +44,11 @@ class Listener:
             # TODO: send "g" packet, receive port capabilities
             self.client_socket.sendall(MONITOR_REQUEST)  # ask tnc to send monitor packets
 
+    def disconnect(self):
+        """Close client socket connection"""
+        self.client_socket.close()
+        logging.info("Closed connection to TNC")
+
     async def receive_packets(self):
         """Receive a packet from the AGWPE API and append it to the packet list as a byte string"""
         while True:

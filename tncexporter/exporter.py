@@ -86,7 +86,8 @@ class TNCExporter:
             except asyncio.CancelledError:
                 pass
             self.listener_task = None
-        await self.server.stop()
+        await self.server.stop()  # stop prometheus server
+        self.listener.disconnect()  # disconnect listener from TNC
 
     @staticmethod
     def haversine_distance(
