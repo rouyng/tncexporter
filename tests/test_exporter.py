@@ -9,7 +9,7 @@ http://dlwis-websdr.ham-radio-op.net:8901/
 http://appr.org.br:8901/
 """
 
-from tncexporter import exporter
+from .context import tncexporter
 import pytest
 
 
@@ -23,7 +23,7 @@ class TestPacketParsing:
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00KB6CYS\x00\x00\x00\x00BEACON\x00\x00\x00\x00_' \
                      b'\x00\x00\x00\x00\x00\x00\x00 1:Fm KB6CYS To BEACON Via N6EX-4 <UI pid=F0 ' \
                      b'Len=24 PF=0 >[14:32:33]\rWEATHER STATION ON-LINE\r\r\x00 '
-        test_result = exporter.TNCExporter.parse_packet(raw_packet)
+        test_result = tncexporter.exporter.TNCExporter.parse_packet(raw_packet)
         assert test_result['frame_type'] == "U"
         assert test_result['call_from'] == 'KB6CYS'
         assert test_result['call_to'] == 'BEACON'
