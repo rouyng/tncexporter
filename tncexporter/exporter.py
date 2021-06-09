@@ -5,14 +5,14 @@ process_packets is called from the main application loop
 
 """
 
-from metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, RF_PACKET_DISTANCE
+from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, RF_PACKET_DISTANCE
 from math import asin, cos, sin, sqrt, radians
 from typing import TypedDict
 import asyncio
 import datetime
 import logging
 import re
-from listener import Listener
+from .listener import Listener
 import aiohttp
 from asyncio.events import AbstractEventLoop
 from aioprometheus import Service
@@ -189,15 +189,15 @@ class TNCExporter:
                     raw_lon = latlon_match[3]
                     lon_direction = latlon_match[4]
                     if lat_direction == 'N':
-                        latitude = float(raw_lat) / 100
+                        latitude = round(float(raw_lat) / 100, 4)
                     elif lat_direction == 'S':
-                        latitude = -float(raw_lat) / 100
+                        latitude = round(-float(raw_lat) / 100, 4)
                     else:
                         latitude = None
                     if lon_direction == 'E':
-                        longitude = float(raw_lon) / 100
+                        longitude = round(float(raw_lon) / 100, 4)
                     elif lon_direction == 'W':
-                        longitude = -float(raw_lon) / 100
+                        longitude = round(-float(raw_lon) / 100, 4)
                     else:
                         longitude = None
                 else:

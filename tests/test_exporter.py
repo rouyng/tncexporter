@@ -63,7 +63,7 @@ class TestPacketParsing:
         assert test_result['timestamp'].second == 38
         assert test_result['hops_count'] == 0
         assert test_result['hops_path'] == []
-        assert test_result['lat_lon'] == (3419.82, -11836.06)
+        assert test_result['lat_lon'] == (34.1982, -118.3606)
 
     def test_parse_4(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00AG7LY-7\x00\x00\x00TQQYRR\x00\x00\x00\x00f' \
@@ -111,7 +111,7 @@ class TestPacketParsing:
         assert test_result['timestamp'].second == 25
         assert test_result['hops_count'] == 1
         assert test_result['hops_path'] == ['SHEPRD']
-        assert test_result['lat_lon'] == (4037.97, -11159.06)
+        assert test_result['lat_lon'] == (40.3797, -111.5906)
 
     def test_parse_7(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00BLOW\x00\x00\x00\x00\x00\x00APDW14\x00\x00' \
@@ -127,7 +127,7 @@ class TestPacketParsing:
         assert test_result['timestamp'].second == 56
         assert test_result['hops_count'] == 2
         assert test_result['hops_path'] == ['RCHFLD', 'SHEPRD']
-        assert test_result['lat_lon'] == (3735.51, -11251.96)
+        assert test_result['lat_lon'] == (37.3551, -112.5196)
 
     def test_parse_8(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00DO0HWI\x00\x00\x00\x00APMI04\x00\x00\x00\x00' \
@@ -143,7 +143,7 @@ class TestPacketParsing:
         assert test_result['timestamp'].second == 50
         assert test_result['hops_count'] == 1
         assert test_result['hops_path'] == ['DB0KUE']
-        assert test_result['lat_lon'] == (5354.08, 1124.80)
+        assert test_result['lat_lon'] == (53.5408, 11.2480)
 
     def test_parse_9(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00DB0HRO\x00\x00\x00\x00APZ18\x00\x00\x00\x00' \
@@ -159,7 +159,7 @@ class TestPacketParsing:
         assert test_result['timestamp'].second == 40
         assert test_result['hops_count'] == 0
         assert test_result['hops_path'] == []
-        assert test_result['lat_lon'] == (5408.37, 1202.82)
+        assert test_result['lat_lon'] == (54.0837, 12.0282)
 
     def test_parse_10(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00PU2WZA-15\x00APN383\x00\x00\x00\x00q\x00\x00' \
@@ -174,7 +174,7 @@ class TestPacketParsing:
         assert test_result['timestamp'].second == 23
         assert test_result['hops_count'] == 0
         assert test_result['hops_path'] == []
-        assert test_result['lat_lon'] == (-2254.81, -4826.34)
+        assert test_result['lat_lon'] == (-22.5481, -48.2634)
 
     def test_parse_11(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00PY2KCA-15\x00APMI01\x00\x00\x00\x00~\x00\x00' \
@@ -190,7 +190,7 @@ class TestPacketParsing:
         assert test_result['timestamp'].second == 52
         assert test_result['hops_count'] == 1
         assert test_result['hops_path'] == ['PU2LYJ-15']
-        assert test_result['lat_lon'] == (-2234.97, -4710.61)
+        assert test_result['lat_lon'] == (-22.3497, -47.1061)
 
     def test_parse_12(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00BX2ADJ-2\x00\x00APAVT7\x00\x00\x00\x00^\x00' \
@@ -205,7 +205,7 @@ class TestPacketParsing:
         assert test_result['timestamp'].second == 43
         assert test_result['hops_count'] == 0
         assert test_result['hops_path'] == []
-        assert test_result['lat_lon'] == (2500.63, 12128.06)
+        assert test_result['lat_lon'] == (25.0063, 121.2806)
 
     def test_parse_13(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00BM2MCF-12\x00APAVTT\x00\x00\x00\x00\x8a\x00' \
@@ -221,7 +221,7 @@ class TestPacketParsing:
         assert test_result['timestamp'].second == 31
         assert test_result['hops_count'] == 1
         assert test_result['hops_path'] == ['BX2ADJ-2']
-        assert test_result['lat_lon'] == (2459.75, 12123.05)
+        assert test_result['lat_lon'] == (24.5975, 121.2305)
 
 
 class TestHaversine:
