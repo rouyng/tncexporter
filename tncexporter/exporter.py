@@ -4,15 +4,16 @@ This module provides the exporter functionality.
 process_packets is called from the main application loop
 
 """
+import sys
 
-from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, RF_PACKET_DISTANCE
+from metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, RF_PACKET_DISTANCE
 from math import asin, cos, sin, sqrt, radians
 from typing import TypedDict
 import asyncio
 import datetime
 import logging
 import re
-from .listener import Listener
+from listener import Listener
 import aiohttp
 from asyncio.events import AbstractEventLoop
 from aioprometheus import Service
@@ -46,6 +47,7 @@ class TNCExporter:
             self.listener = Listener(tnc_url)
         except ConnectionRefusedError:
             logging.error("Could not create TNC listener")
+            sys.exit()
         else:
             self.loop = loop or asyncio.get_event_loop()
             self.host = host
