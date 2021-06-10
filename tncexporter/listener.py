@@ -32,7 +32,7 @@ class Listener:
         self.api_version = None  # version returned by host API
         self.loop = loop or asyncio.get_event_loop()
 
-    def connect(self, host, port):
+    def connect(self, host: str, port: int, retry_delay: int = 10):
         """Connect to a TNC's AGWPE API"""
         while True:
             try:
@@ -40,8 +40,8 @@ class Listener:
                 self.client_socket.connect((host, port))
             except ConnectionRefusedError:
                 logging.error(f"Could not connect to TNC at {host}:{port}, connection refused")
-                logging.error(f"Retrying in 10 seconds")
-                sleep(10)
+                logging.error(f"Retrying in {retry_delay} seconds")
+                sleep(retry_delay)
                 continue
             else:
                 logging.info(f"Connection established to TNC at {host}:{port}")
@@ -58,7 +58,6 @@ class Listener:
     async def receive_packets(self):
         """Receive a packet from the AGWPE API and append it to the packet list as a byte string"""
         while True:
-            # TODO: handle ConnectionResetError
             chunks = b""
             bytes_recv = 0
             while bytes_recv < 36:
