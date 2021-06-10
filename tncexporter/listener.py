@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 import socket
 import logging
 from asyncio.events import AbstractEventLoop
+from time import sleep
 
 # AGWPE format packet to request version from TNC host
 VERSION_REQUEST = b"\x00\x00\x00\x00\x52\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
@@ -33,16 +34,21 @@ class Listener:
 
     def connect(self, host, port):
         """Connect to a TNC's AGWPE API"""
-        try:
-            self.client_socket.connect((host, port))
-        except ConnectionRefusedError:
-            logging.error(f"Could not connect to TNC at {host}:{port}, connection refused")
-            raise ConnectionRefusedError
-        else:
-            logging.info(f"Connection established to TNC at {host}:{port}")
-            # TODO: send "R" packet, receive version number
-            # TODO: send "g" packet, receive port capabilities
-            self.client_socket.sendall(MONITOR_REQUEST)  # ask tnc to send monitor packets
+        while True:
+            try:
+                logging.info(f"Attempting to connect to TNC at {host}:{port}")
+                self.client_socket.connect((host, port))
+            except ConnectionRefusedError:
+                logging.error(f"Could not connect to TNC at {host}:{port}, connection refused")
+                logging.error(f"Retrying in 10 seconds")
+                sleep(10)
+                continue
+            else:
+                logging.info(f"Connection established to TNC at {host}:{port}")
+                break
+                # TODO: send "R" packet, receive version number
+                # TODO: send "g" packet, receive port capabilities
+        self.client_socket.sendall(MONITOR_REQUEST)  # ask tnc to send monitor packets
 
     def disconnect(self):
         """Close client socket connection"""
@@ -56,11 +62,20 @@ class Listener:
             chunks = b""
             bytes_recv = 0
             while bytes_recv < 36:
-                chunk = await self.loop.sock_recv(self.client_socket, 4096)
-                if chunk == b'':
-                    raise Exception("Socket connection broken")
-                chunks += chunk
-                bytes_recv += len(chunk)
+                try:
+                    chunk = await self.loop.sock_recv(self.client_socket, 4096)
+                    if chunk == b'':
+                        raise ConnectionResetError("Socket connection broken")
+                except ConnectionResetError:
+                    logging.error("Connection to TNC was reset")
+                    self.client_socket.close()
+                    # remake client socket
+                    self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    self.connect(self.tnc_host, self.tnc_port)
+                    continue
+                else:
+                    chunks += chunk
+                    bytes_recv += len(chunk)
             self.packets.append(chunks)
             logging.info(f"Received packet, total {len(self.packets)}")
 
