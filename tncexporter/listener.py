@@ -48,6 +48,7 @@ class Listener:
                 break
                 # TODO: send "R" packet, receive version number
                 # TODO: send "g" packet, receive port capabilities
+                # TODO: abort connection if R/g packet responses are not as expected
         self.client_socket.sendall(MONITOR_REQUEST)  # ask tnc to send monitor packets
 
     def disconnect(self):
@@ -56,7 +57,10 @@ class Listener:
         logging.info("Closed connection to TNC")
 
     async def receive_packets(self):
-        """Receive a packet from the AGWPE API and append it to the packet list as a byte string"""
+        """
+        Continually receive packets from the AGWPE API and append them to the packet list
+        as byte strings.
+        """
         while True:
             chunks = b""
             bytes_recv = 0
