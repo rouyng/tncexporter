@@ -6,10 +6,8 @@ from prometheus_client import start_http_server
 import time
 import argparse
 import logging
-import exporter
-from listener import Listener
 import asyncio
-from exporter import TNCExporter
+from .exporter import TNCExporter
 
 
 def main():
