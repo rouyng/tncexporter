@@ -14,7 +14,6 @@ import datetime
 import logging
 import re
 from .listener import Listener
-import aiohttp
 from asyncio.events import AbstractEventLoop
 from aioprometheus import Service
 
@@ -234,9 +233,9 @@ class TNCExporter:
                 for p in packets:
                     parsed = self.parse_packet(p)
                     self.packet_metrics(parsed, self.location)
-            except Exception as exc:
+            except Exception:
                 # TODO: handle more specific exceptions
-                logger.exception(f"Error processing metrics from packets")
+                logger.exception("Error processing metrics from packets")
             # wait until next metric collection time
             end = datetime.datetime.now()
             wait_seconds = (start + self.stats_interval - end).total_seconds()

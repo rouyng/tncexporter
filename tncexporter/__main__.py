@@ -2,8 +2,6 @@
 Export TNC metrics using prometheus.
 """
 
-from prometheus_client import start_http_server
-import time
 import argparse
 import logging
 import asyncio
