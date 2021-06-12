@@ -46,9 +46,9 @@ class Listener:
             else:
                 logging.info(f"Connection established to TNC at {host}:{port}")
                 break
-                # TODO: send "R" packet, receive version number
-                # TODO: send "g" packet, receive port capabilities
-                # TODO: abort connection if R/g packet responses are not as expected
+        # TODO: send "R" packet, receive version number
+        # TODO: send "g" packet, receive port capabilities
+        # TODO: abort connection if R/g packet responses are not as expected
         self.client_socket.sendall(MONITOR_REQUEST)  # ask tnc to send monitor packets
 
     def disconnect(self):
