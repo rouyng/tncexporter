@@ -228,14 +228,11 @@ class TNCExporter:
         interval set when starting the exporter."""
         while True:
             start = datetime.datetime.now()
-            try:
-                packets = self.listener.read_packet_queue()
-                for p in packets:
-                    parsed = self.parse_packet(p)
-                    self.packet_metrics(parsed, self.location)
-            except Exception:
-                # TODO: handle more specific exceptions
-                logger.exception("Error processing metrics from packets")
+            packets = self.listener.read_packet_queue()
+            for p in packets:
+                parsed = self.parse_packet(p)
+                self.packet_metrics(parsed, self.location)
+            logging.info(f"Updated metrics for {len(packets)} packets received from TNC")
             # wait until next metric collection time
             end = datetime.datetime.now()
             wait_seconds = (start + self.stats_interval - end).total_seconds()

@@ -77,9 +77,13 @@ def main():
 
     # set logging message verbosity
     if args.debug:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG,
+                            format='%(levelname)s: %(asctime)s - %(message)s',
+                            datefmt='%d-%b-%y %H:%M:%S')
     else:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.INFO,
+                            format='%(levelname)s: %(asctime)s - %(message)s',
+                            datefmt='%d-%b-%y %H:%M:%S')
 
     location = None
     if args.latitude and args.longitude:

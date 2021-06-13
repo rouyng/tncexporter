@@ -80,11 +80,11 @@ class Listener:
                     chunks += chunk
                     bytes_recv += len(chunk)
             self.packets.append(chunks)
-            logging.info(f"Received packet, total {len(self.packets)}")
+            logging.debug(f"Received packet, total {len(self.packets)} in queue")
 
     def read_packet_queue(self):
         """Returns packets in queue for exporter processing and clears queue"""
         packet_batch = self.packets.copy()
         self.packets = []
-        logging.info(f"{len(packet_batch)} packets read from queue")
+        logging.debug(f"{len(packet_batch)} packets read from queue")
         return packet_batch
