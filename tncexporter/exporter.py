@@ -130,12 +130,12 @@ class TNCExporter:
         len_data = int.from_bytes(raw_packet[28:32], signed=False, byteorder="little")
         frame_type = chr(raw_packet[4])
         try:
-            call_from = raw_packet[8:18].decode("utf-8").strip('\x00')
+            call_from = raw_packet[8:18].strip(b'\x00').decode("ascii")
         except UnicodeDecodeError:
             call_from = None
             logging.debug(f"Unicode error when decoding: {raw_packet[8:18]}")
         try:
-            call_to = raw_packet[18:28].decode("utf-8").strip('\x00')
+            call_to = raw_packet[18:28].strip(b'\x00').decode("ascii")
         except UnicodeDecodeError:
             call_to = None
             logging.debug(f"Unicode error when decoding: {raw_packet[18:28]}")
@@ -145,7 +145,7 @@ class TNCExporter:
         longitude = None
         hops = []
         try:
-            data_string = raw_packet[36:].decode("utf-8").strip('\x00')
+            data_string = raw_packet[36:].strip(b'\x00').decode("ascii")
             logging.debug("Parsing data from the following string:")
             logging.debug(data_string)
             # parse timestamp
