@@ -45,8 +45,15 @@ There are three methods to install TNC exporter
 ### Installing and configuring grafana
 A full guide on how to install and configure grafana is outside the scope of this readme. Please consult the [official Grafana installation guide](https://grafana.com/docs/grafana/latest/installation/) or the many other online tutorials available.
 
+## TODO
+- PyPI packaging
+- Create Dockerfile
+- Example grafana dashboard
+- Test support for other software TNCs such as UZ7HO and AGWPE
+- AIS support (via Direwolf, currenly have no way to test this as AIS needs a 9600 bps setup)
+
 ## Contributing
-*TODO: Contribution guidelines*
+If you have a bug report or feature request, please open an issue via Github. Code contributions are welcome, please open an issue to propose and discuss changes before submitting substantial pull requests.
 
 ## License
-*TODO: create LICENSE.md*
+Licensed under the terms of the MIT license. See LICENSE.md for more details.
