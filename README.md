@@ -50,7 +50,7 @@ A full guide on how to install and configure grafana is outside the scope of thi
 - Create Dockerfile
 - Example grafana dashboard
 - Test support for other software TNCs such as UZ7HO and AGWPE
-- AIS support (via Direwolf, currenly have no way to test this as AIS needs a 9600 bps setup)
+- AIS support (via Direwolf, currently have no way to test this as AIS needs a 9600 bps setup)
 
 ## Contributing
 If you have a bug report or feature request, please open an issue via Github. Code contributions are welcome, please open an issue to propose and discuss changes before submitting substantial pull requests.
