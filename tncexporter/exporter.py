@@ -67,7 +67,7 @@ class TNCExporter:
     async def start(self) -> None:
         """ Start the monitor """
         await self.server.start(addr=self.host, port=self.port)
-        logger.info(f"serving dump1090 prometheus metrics on: {self.server.metrics_url}")
+        logger.info(f"serving TNC prometheus metrics on: {self.server.metrics_url}")
         self.metrics_task = asyncio.create_task(self.metric_updater())
         self.listener_task = asyncio.create_task(self.listener.receive_packets())
 

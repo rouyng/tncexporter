@@ -8,6 +8,7 @@ import socket
 import logging
 from asyncio.events import AbstractEventLoop
 from time import sleep
+import sys
 
 # AGWPE format packet to request version from TNC host
 VERSION_REQUEST = b"\x00\x00\x00\x00\x52\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
@@ -46,10 +47,33 @@ class Listener:
             else:
                 logging.info(f"Connection established to TNC at {host}:{port}")
                 break
-        # TODO: send "R" packet, receive version number
+        # send version request packet to TNC
+        # this provides a check as to whether you are connecting to an actual TNC that
+        # exposes an AGWPE API, as well as logging the version response for debugging
+        logging.debug("Sending version request to TNC")
+        self.client_socket.sendall(VERSION_REQUEST)
+        version_packet = b""
+        bytes_recv = 0
+        while bytes_recv < 36:
+            chunk = self.client_socket.recv(4096)
+            if chunk == b'':
+                raise ConnectionResetError("Socket connection broken")
+            version_packet += chunk
+            bytes_recv += len(chunk)
+        if chr(version_packet[4]) == 'R':
+            # read major and minor versions from packet sent by TNC
+            maj_ver = int.from_bytes(version_packet[36:38], 'little')
+            min_ver = int.from_bytes(version_packet[40:42], 'little')
+            logging.debug(f"Received TNC version info: {maj_ver}.{min_ver} ")
+            self.client_socket.sendall(MONITOR_REQUEST)  # ask tnc to send monitor packets
+        else:
+            # If the version response packet doesn't report the expected R packet type in byte 4,
+            # shut everything down as you're probably not communicating with the AGWPE API
+            logging.error("Did not receive expected reply when connecting to TNC. Quitting.")
+            logging.debug("Received the following packet in response to version request:",
+                          version_packet)
+            sys.exit()
         # TODO: send "g" packet, receive port capabilities
-        # TODO: abort connection if R/g packet responses are not as expected
-        self.client_socket.sendall(MONITOR_REQUEST)  # ask tnc to send monitor packets
 
     def disconnect(self):
         """Close client socket connection"""
