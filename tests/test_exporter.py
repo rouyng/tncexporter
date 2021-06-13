@@ -223,6 +223,24 @@ class TestPacketParsing:
         assert test_result['hops_path'] == ['BX2ADJ-2']
         assert test_result['lat_lon'] == (24.5975, 121.2305)
 
+    def test_parse_14(self):
+        """This test checks parsing of uncommon comma separated lat/lon values"""
+        raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00BM2MCF-12\x00APAVTT\x00\x00\x00\x00\x8a\x00' \
+                     b'\x00\x00\x00\x00\x00\x00 1:Fm BM2MCF-12 To APAVTT Via BX2ADJ-2,WIDE1,' \
+                     b'WIDE2-1 <UI pid=F0 Len=48 PF=0 >[17:44:31]\r$GPGGA,021511.000,4847.8301,N,' \
+                     b'00829.8295,E,2,11,0.9,714.1,M,47.9,M,1.8,0000*7EF0 Len=79 PF=0 >' \
+                     b'[19:15:16]\r\x00'
+        test_result = tncexporter.exporter.TNCExporter.parse_packet(raw_packet)
+        assert test_result['frame_type'] == "U"
+        assert test_result['call_from'] == 'BM2MCF-12'
+        assert test_result['call_to'] == 'APAVTT'
+        assert test_result['timestamp'].hour == 17
+        assert test_result['timestamp'].minute == 44
+        assert test_result['timestamp'].second == 31
+        assert test_result['hops_count'] == 1
+        assert test_result['hops_path'] == ['BX2ADJ-2']
+        assert test_result['lat_lon'] == (48.4783, 8.2982)
+
 
 class TestHaversine:
     """Test distance calculations performed by exporter.haversine_distance()"""
