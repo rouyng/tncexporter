@@ -73,7 +73,6 @@ class Listener:
             logging.debug("Received the following packet in response to version request:",
                           version_packet)
             sys.exit()
-        # TODO: send "g" packet, receive port capabilities
 
     def disconnect(self):
         """Close client socket connection"""
