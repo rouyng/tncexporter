@@ -38,7 +38,6 @@ class TNCExporter:
             tnc_url: str,
             host: str = None,
             port: int = 9105,
-            stats_interval: int = 60,
             summary_interval: int = 60,
             receiver_location: tuple = None,
             loop: AbstractEventLoop = None) -> None:
@@ -51,7 +50,6 @@ class TNCExporter:
             self.loop = loop or asyncio.get_event_loop()
             self.host = host
             self.port = port
-            self.stats_interval = datetime.timedelta(seconds=stats_interval)
             self.summary_interval = datetime.timedelta(seconds=summary_interval)
             self.location = receiver_location
             self.metrics_task = None
@@ -68,7 +66,7 @@ class TNCExporter:
         """ Start the monitor """
         await self.server.start(addr=self.host, port=self.port)
         logger.info(f"serving TNC prometheus metrics on: {self.server.metrics_url}")
-        self.metrics_task = asyncio.create_task(self.metric_updater())
+        self.metrics_task = [asyncio.create_task(self.metric_updater(w)) for w in range(0, 3)]
         self.listener_task = asyncio.create_task(self.listener.receive_packets())
 
     async def stop(self) -> None:
@@ -223,7 +221,7 @@ class TNCExporter:
         logging.debug(f"Decoded packet: {decoded_info}")
         return decoded_info
 
-    async def metric_updater(self):
+    async def metric_updater(self, worker: int = 0):
         """Asynchronous coroutine function that reads the queue of received packets and calls
         packet_metrics on each packet in the queue. Runs on an interval defined by the update
         interval set when starting the exporter."""
@@ -231,9 +229,9 @@ class TNCExporter:
             try:
                 packet = await self.listener.packet_queue.get()
                 parsed = self.parse_packet(packet)
-                self.listener.packet_queue.task_done()
                 self.packet_metrics(parsed, self.location)
-                logging.debug(f"Updated metrics for packet received from TNC")
+                logging.debug(f"Worker {worker} updated metrics for packet received from TNC")
+                self.listener.packet_queue.task_done()
             except Exception:
                 logging.exception("Error processing packet into metrics: ")
 

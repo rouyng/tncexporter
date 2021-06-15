@@ -93,7 +93,6 @@ def main():
         tnc_url=args.tnc_url,
         host=args.host,
         port=args.port,
-        stats_interval=args.update_interval,
         summary_interval=args.summary_interval,
         receiver_location=location
     )
