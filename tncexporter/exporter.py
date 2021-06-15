@@ -88,6 +88,7 @@ class TNCExporter:
                 pass
             self.listener_task = None
         await self.server.stop()  # stop prometheus server
+        await self.listener.packet_queue.join()
         self.listener.disconnect()  # disconnect listener from TNC
 
     @staticmethod
@@ -229,15 +230,11 @@ class TNCExporter:
         while True:
             start = datetime.datetime.now()
             # TODO: use asyncio queues?
-            packets = self.listener.read_packet_queue()
-            for p in packets:
-                parsed = self.parse_packet(p)
-                self.packet_metrics(parsed, self.location)
-            logging.info(f"Updated metrics for {len(packets)} packets received from TNC")
-            # wait until next metric collection time
-            end = datetime.datetime.now()
-            wait_seconds = (start + self.stats_interval - end).total_seconds()
-            await asyncio.sleep(wait_seconds)
+            packet = await self.listener.packet_queue.get()
+            parsed = self.parse_packet(packet)
+            self.listener.packet_queue.task_done()
+            self.packet_metrics(parsed, self.location)
+            logging.debug(f"Updated metrics for packet received from TNC")
 
     def packet_metrics(self, packet_info: PacketInfo, tnc_latlon: tuple):
         """

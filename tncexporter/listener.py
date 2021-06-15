@@ -27,7 +27,7 @@ class Listener:
         self.parsed_url = urlparse(tnc_url)
         self.tnc_host = self.parsed_url.hostname  # tnc host to connect to
         self.tnc_port = int(self.parsed_url.port)  # tnc port to listen on
-        self.packets = []  # queue of raw packet bytestrings to be parsed/processed by exporter
+        self.packet_queue = asyncio.Queue()
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect(self.tnc_host, self.tnc_port)
         self.api_version = None  # version returned by host API
@@ -85,7 +85,7 @@ class Listener:
         as byte strings.
         """
         while True:
-            chunks = b""
+            packet_bytestring = b""
             bytes_recv = 0
             while bytes_recv < 36:
                 try:
@@ -100,14 +100,7 @@ class Listener:
                     self.connect(self.tnc_host, self.tnc_port)
                     continue
                 else:
-                    chunks += chunk
+                    packet_bytestring += chunk
                     bytes_recv += len(chunk)
-            self.packets.append(chunks)
-            logging.debug(f"Received packet, total {len(self.packets)} in queue")
-
-    def read_packet_queue(self):
-        """Returns packets in queue for exporter processing and clears queue"""
-        packet_batch = self.packets.copy()
-        self.packets = []
-        logging.debug(f"{len(packet_batch)} packets read from queue")
-        return packet_batch
+            await self.packet_queue.put(packet_bytestring)
+            logging.debug(f"Received packet, total {self.packet_queue.qsize()} in queue")
