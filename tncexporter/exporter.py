@@ -228,13 +228,14 @@ class TNCExporter:
         packet_metrics on each packet in the queue. Runs on an interval defined by the update
         interval set when starting the exporter."""
         while True:
-            start = datetime.datetime.now()
-            # TODO: use asyncio queues?
-            packet = await self.listener.packet_queue.get()
-            parsed = self.parse_packet(packet)
-            self.listener.packet_queue.task_done()
-            self.packet_metrics(parsed, self.location)
-            logging.debug(f"Updated metrics for packet received from TNC")
+            try:
+                packet = await self.listener.packet_queue.get()
+                parsed = self.parse_packet(packet)
+                self.listener.packet_queue.task_done()
+                self.packet_metrics(parsed, self.location)
+                logging.debug(f"Updated metrics for packet received from TNC")
+            except Exception:
+                logging.exception("Error processing packet into metrics: ")
 
     def packet_metrics(self, packet_info: PacketInfo, tnc_latlon: tuple):
         """
