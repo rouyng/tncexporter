@@ -34,7 +34,15 @@ def main():
         default=9110,
         help="The port to expose collected metrics from. Default is 9110",
     )
-    # summary metrics currently not implemented
+    parser.add_argument(
+        "--update-interval",
+        metavar="<stats data refresh interval>",
+        type=int,
+        dest="update_interval",
+        default=60,
+        help="The number of seconds between updates of TNC metrics. This determines the rate at "
+             "which the prometheus client exposes new metrics. Default is 60 seconds",
+    )
     parser.add_argument(
         "--summary-interval",
         metavar="<summary metrics interval>",
@@ -93,6 +101,7 @@ def main():
         tnc_url=args.tnc_url,
         host=args.host,
         port=args.port,
+        stats_interval=args.update_interval,
         summary_interval=args.summary_interval,
         receiver_location=location
     )
