@@ -72,12 +72,19 @@ def main():
     parser.add_argument(
         "--debug", action="store_true", default=False, help="Print debug output"
     )
+    parser.add_argument(
+        "--quiet", action="store_true", default=False, help="Only print errors to stdout"
+    )
 
     args = parser.parse_args()
 
     # set logging message verbosity
     if args.debug:
         logging.basicConfig(level=logging.DEBUG,
+                            format='%(levelname)s: %(asctime)s - %(message)s',
+                            datefmt='%d-%b-%y %H:%M:%S')
+    elif args.quiet:
+        logging.basicConfig(level=logging.ERROR,
                             format='%(levelname)s: %(asctime)s - %(message)s',
                             datefmt='%d-%b-%y %H:%M:%S')
     else:

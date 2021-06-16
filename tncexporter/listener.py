@@ -40,8 +40,8 @@ class Listener:
                 logging.info(f"Attempting to connect to TNC at {host}:{port}")
                 self.client_socket.connect((host, port))
             except ConnectionRefusedError:
-                logging.error(f"Could not connect to TNC at {host}:{port}, connection refused")
-                logging.error(f"Retrying in {retry_delay} seconds")
+                logging.error(f"Could not connect to TNC at {host}:{port}, connection refused. "
+                              f"Retrying in {retry_delay} seconds")
                 sleep(retry_delay)
                 continue
             else:
