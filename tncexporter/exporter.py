@@ -261,7 +261,7 @@ class TNCExporter:
         else:
             # if a packet is received and decoded, increment PACKET_RX metric
             path_type = "Digi" if packet_info['hops_count'] > 0 else "Simplex"
-            PACKET_RX.inc({'ax25 frame type': packet_info['frame_type'], 'path': path_type})
+            PACKET_RX.inc({'ax25_frame_type': packet_info['frame_type'], 'path': path_type})
             if all([v is not None for v in packet_info['lat_lon']]) and tnc_latlon is not None:
                 # calculate distance between TNC location and packet's reported lat/lon
                 distance_from_tnc = self.haversine_distance(pos1=tnc_latlon,
