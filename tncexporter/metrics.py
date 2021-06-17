@@ -10,22 +10,22 @@ from aioprometheus import Counter, Gauge, Summary
 # PACKET_RX labels:
 # 'ax_25_frame_type' : "U", "I", "S" for AX.25 frame types
 # 'path' : "Digi" for digipeated packets (hops > 0), "Simplex" for simplex packets (0 hops)
-PACKET_RX = Counter("packet_rx",
+PACKET_RX = Counter("tnc_packet_rx",
                     "Number of packets received and decoded")
-PACKET_TX = Counter("packet_tx",
+PACKET_TX = Counter("tnc_packet_tx",
                     "Number of packets transmitted")
-PACKET_RX_RECENT = Gauge("packet_rx_recent",
+PACKET_RX_RECENT = Gauge("tnc_packet_rx_recent",
                          "Number of packets received over last time period")
-PACKET_TX_RECENT = Gauge("packet_tx_recent",
+PACKET_TX_RECENT = Gauge("tnc_packet_tx_recent",
                          "Number of packets transmitted over last time period")
 
 # Metrics tracking distances of received frames. Only calculated for frames that report
 # position data (APRS)
-PACKET_DISTANCE = Summary("packet_distance",
+PACKET_DISTANCE = Summary("tnc_packet_distance",
                           "Distance in meters of received position packets from TNC "
                           "(digipeated and RF)")
-RF_PACKET_DISTANCE = Summary("rf_packet_distance",
+RF_PACKET_DISTANCE = Summary("tnc_rf_packet_distance",
                              "Distance in meters of received position packets from TNC (RF only)")
-MAX_DISTANCE_RECENT = Gauge("max_range_recent",
+MAX_DISTANCE_RECENT = Gauge("tnc_max_range_recent",
                             "Maximum range in meters of position frames received over last time "
                             "period")

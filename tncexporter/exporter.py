@@ -88,7 +88,6 @@ class TNCExporter:
                 pass
             self.listener_task = None
         await self.server.stop()  # stop prometheus server
-        await self.listener.packet_queue.join()
         self.listener.disconnect()  # disconnect listener from TNC
 
     @staticmethod
