@@ -230,15 +230,18 @@ class TNCExporter:
         while True:
             start = datetime.datetime.now()
             try:
-                while not self.listener.packet_queue.empty():
+                # Only try to get packet bytestrings from the queue if it is not empty
+                while True:
                     packet = await self.listener.packet_queue.get()
                     parsed = self.parse_packet(packet)
                     self.packet_metrics(parsed, self.location)
                     logging.debug(f"Updated metrics for packet received from TNC")
                     self.listener.packet_queue.task_done()
+                    if self.listener.packet_queue.empty():
+                        break
             except Exception:
                 logging.exception("Error processing packet into metrics: ")
-            # wait until next metric collection time
+            # await end of sleep cycle to update metrics, defined by update-interval parameter
             end = datetime.datetime.now()
             wait_seconds = (start + self.stats_interval - end).total_seconds()
             await asyncio.sleep(wait_seconds)
