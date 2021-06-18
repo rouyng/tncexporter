@@ -251,13 +251,13 @@ class TNCExporter:
         :param packet_info: a PacketInfo object containing packet metadata
         :param tnc_latlon: a tuple defining (lat, lon) of the TNC in decimal degrees
         """
+        path_type = "Digi" if packet_info['hops_count'] > 0 else "Simplex"
         if packet_info['frame_type'] == 'T':
             # if a packet is transmitted, increment PACKET_TX
             # TODO: more informative labels
-            PACKET_TX.inc({'type': 'unknown'})
+            PACKET_TX.inc({'path': path_type})
         else:
             # if a packet is received and decoded, increment PACKET_RX metric
-            path_type = "Digi" if packet_info['hops_count'] > 0 else "Simplex"
             PACKET_RX.inc({'ax25_frame_type': packet_info['frame_type'], 'path': path_type})
             if all([v is not None for v in packet_info['lat_lon']]) and tnc_latlon is not None:
                 # calculate distance between TNC location and packet's reported lat/lon
