@@ -48,7 +48,7 @@
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
-        "orientation": "auto",
+        "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
             "delta"
@@ -216,7 +216,7 @@
         "values": false
       },
       "lines": true,
-      "linewidth": 1,
+      "linewidth": 2,
       "nullPointMode": "null",
       "options": {
         "dataLinks": []
@@ -228,10 +228,10 @@
       "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
-      "steppedLine": false,
+      "steppedLine": true,
       "targets": [
         {
-          "expr": "max(tnc_rf_packet_distance)",
+          "expr": "max(tnc_rf_packet_distance) / 1000",
           "interval": "1m",
           "legendFormat": "",
           "refId": "A"
@@ -241,7 +241,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Max RF Distance",
+      "title": "Max Receive Distance (km)",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -308,7 +308,7 @@
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
-        "orientation": "auto",
+        "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
             "delta"
@@ -452,7 +452,7 @@
     "list": []
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {
