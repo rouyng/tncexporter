@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 2,
+  "id": 7,
   "links": [],
   "panels": [
     {
@@ -57,7 +57,7 @@
           "values": false
         }
       },
-      "pluginVersion": "7.0.6",
+      "pluginVersion": "7.0.3",
       "targets": [
         {
           "expr": "tnc_packet_rx\n",
@@ -76,7 +76,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "ubuntu_prometheus",
+      "datasource": null,
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -317,7 +317,7 @@
           "values": false
         }
       },
-      "pluginVersion": "7.0.6",
+      "pluginVersion": "7.0.3",
       "targets": [
         {
           "expr": "tnc_packet_tx\n",
@@ -336,7 +336,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "ubuntu_prometheus",
+      "datasource": null,
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -444,8 +444,8 @@
       }
     }
   ],
-  "refresh": "5s",
-  "schemaVersion": 25,
+  "refresh": "10s",
+  "schemaVersion": 30,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -471,5 +471,5 @@
   "timezone": "",
   "title": "TNC Exporter",
   "uid": "sS_GTAg7k",
-  "version": 10
+  "version": 3
 }
