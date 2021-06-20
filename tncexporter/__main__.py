@@ -39,19 +39,9 @@ def main():
         metavar="<stats data refresh interval>",
         type=int,
         dest="update_interval",
-        default=60,
+        default=30,
         help="The number of seconds between updates of TNC metrics. This determines the rate at "
-             "which the prometheus client exposes new metrics. Default is 60 seconds",
-    )
-    parser.add_argument(
-        "--summary-interval",
-        metavar="<summary metrics interval>",
-        type=int,
-        dest="summary_interval",
-        default=300,
-        help="The number of seconds over which to calculate recent activity summary metrics. "
-             "Metrics that end with _recent are affected by this parameter. Default is 300 seconds"
-             " (5 minutes)",
+             "which the prometheus client exposes new metrics. Default is 30 seconds",
     )
     parser.add_argument(
         "--latitude",
@@ -109,7 +99,6 @@ def main():
         host=args.host,
         port=args.port,
         stats_interval=args.update_interval,
-        summary_interval=args.summary_interval,
         receiver_location=location
     )
     loop.run_until_complete(exp.start())

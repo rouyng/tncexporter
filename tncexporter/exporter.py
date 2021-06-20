@@ -41,7 +41,6 @@ class TNCExporter:
             host: str = None,
             port: int = 9105,
             stats_interval: int = 60,
-            summary_interval: int = 60,
             receiver_location: tuple = None,
             loop: AbstractEventLoop = None) -> None:
         try:
@@ -54,7 +53,6 @@ class TNCExporter:
             self.host = host
             self.port = port
             self.stats_interval = datetime.timedelta(seconds=stats_interval)
-            self.summary_interval = datetime.timedelta(seconds=summary_interval)
             self.location = receiver_location
             self.metrics_task = None
             self.listener_task = None
