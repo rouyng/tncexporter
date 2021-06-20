@@ -6,11 +6,13 @@ process_packets is called from the main application loop
 """
 import sys
 
-from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, RF_PACKET_DISTANCE
+from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE,\
+    RF_PACKET_DISTANCE, MAX_DISTANCE_RECENT, PACKET_RX_RECENT, PACKET_TX_RECENT
 from math import asin, cos, sin, sqrt, radians
 from typing import TypedDict
 import asyncio
 import datetime
+import functools
 import logging
 import re
 from .listener import Listener
@@ -57,7 +59,14 @@ class TNCExporter:
             self.metrics_task = None
             self.listener_task = None
             self.server = Service()
-            self.register_metrics((PACKET_RX, PACKET_TX, PACKET_DISTANCE, RF_PACKET_DISTANCE))
+            self.register_metrics((PACKET_RX,
+                                   PACKET_TX,
+                                   PACKET_DISTANCE,
+                                   RF_PACKET_DISTANCE,
+                                   MAX_DISTANCE_RECENT,
+                                   PACKET_RX_RECENT,
+                                   PACKET_TX_RECENT
+                                   ))
 
     def register_metrics(self, metrics_list: tuple):
         """Register metrics  with aioprometheus service"""
@@ -235,9 +244,9 @@ class TNCExporter:
                 while not self.listener.packet_queue.empty():
                     packet = await self.listener.packet_queue.get()
                     parsed = self.parse_packet(packet)
-                    self.packet_metrics(parsed, self.location)
+                    self.packet_metrics(parsed)
                     logging.debug(f"Updated metrics for packet received from TNC")
-                    packets_to_summarize.append(packet)
+                    packets_to_summarize.append(parsed)
                     self.listener.packet_queue.task_done()
             except Exception:
                 logging.exception("Error processing packet into metrics: ")
@@ -250,7 +259,7 @@ class TNCExporter:
             wait_seconds = (start + self.stats_interval - end).total_seconds()
             await asyncio.sleep(wait_seconds)
 
-    def packet_metrics(self, packet_info: PacketInfo, tnc_latlon: tuple):
+    def packet_metrics(self, packet_info: PacketInfo):
         """
         Function that processes individual packet metadata from a PacketInfo object
          and updates Prometheus metrics.
@@ -268,9 +277,9 @@ class TNCExporter:
             PACKET_RX.inc({'ax25_frame_type': packet_info['frame_type'],
                            'path': path_type,
                            'from_cs': packet_info['call_from']})
-            if all([v is not None for v in packet_info['lat_lon']]) and tnc_latlon is not None:
+            if all([v is not None for v in packet_info['lat_lon']]) and self.location is not None:
                 # calculate distance between TNC location and packet's reported lat/lon
-                distance_from_tnc = self.haversine_distance(pos1=tnc_latlon,
+                distance_from_tnc = self.haversine_distance(pos1=self.location,
                                                             pos2=packet_info['lat_lon'])
                 # Update PACKET_DISTANCE for all received packets with lat/lon info, including
                 # ones received by digipeating
@@ -279,7 +288,7 @@ class TNCExporter:
                     # No hops means the packet was received via RF, so update RF_PACKET_DISTANCE
                     RF_PACKET_DISTANCE.observe({'type': 'unknown'}, distance_from_tnc)
 
-    def summary_metrics(self, packets: list):
+    def summary_metrics(self, packets: list[PacketInfo]):
         """
         Function that processes multiple PacketInfo object
          and updates Prometheus metrics based on aggregate measurements across the update interval.
@@ -287,4 +296,35 @@ class TNCExporter:
         :param packets: a list of PacketInfo objects containing packet metadata
         :param tnc_latlon: a tuple defining (lat, lon) of the TNC in decimal degrees
         """
-        pass
+        packets_rx_count = 0
+        packets_tx_count = 0
+        max_rf_distance = 0
+        max_digi_distance = 0
+        if len(packets) > 0:
+            packets_rx = [p for p in packets if p['frame_type'] != 'T']
+            packets_rx_count = len(packets_rx)
+            packets_tx_count = len([p for p in packets if p['frame_type'] == 'T'])
+            if all([w is not None for w in self.location]):
+                # ValueError is raised if max arg is empty
+                try:
+                    max_rf_distance = max([self.haversine_distance(self.location, p['lat_lon']) for p
+                                           in packets_rx if all([w is not None for w in p['lat_lon']])
+                                           and p['hops_count'] == 0])
+                except ValueError:
+                    pass
+                try:
+                    max_digi_distance = max([self.haversine_distance(self.location, p['lat_lon']) for p
+                                            in packets_rx if all([w is not None for w in p['lat_lon']])
+                                            and p['hops_count'] > 0])
+                except ValueError:
+                    pass
+
+        # Update summary metrics for last update interval
+
+        MAX_DISTANCE_RECENT.set({'interval': self.stats_interval.seconds, 'path': 'Simplex'},
+                                max_rf_distance)
+        MAX_DISTANCE_RECENT.set({'interval': self.stats_interval.seconds, 'path': 'Digi'},
+                                max_digi_distance)
+        PACKET_RX_RECENT.set({'interval': self.stats_interval.seconds}, packets_rx_count)
+        PACKET_TX_RECENT.set({'interval': self.stats_interval.seconds}, packets_tx_count)
+        logging.info("Updated summary metrics")

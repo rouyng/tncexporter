@@ -29,6 +29,9 @@ RF_PACKET_DISTANCE = Summary("tnc_rf_packet_distance",
 # defined by update_interval
 MAX_DISTANCE_RECENT = Gauge("tnc_max_range_recent",
                             "Maximum range in meters of position frames received over last time "
+                            "period. Includes digipeated frames")
+MAX_RF_DISTANCE_RECENT = Gauge("tnc_max_rf_range_recent",
+                            "Maximum range in meters of non-digipeated position frames received over last time "
                             "period")
 PACKET_RX_RECENT = Gauge("tnc_packet_rx_recent",
                          "Number of packets received over last time period")
