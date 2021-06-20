@@ -226,7 +226,9 @@ class TNCExporter:
         """Asynchronous coroutine function that reads the queue of received packets and calls
         packet_metrics on each packet in the queue. Runs on an interval defined by the update
         interval set when starting the exporter."""
+
         while True:
+            packets_to_summarize = []
             start = datetime.datetime.now()
             try:
                 # Only try to get packet bytestrings from the queue if it is not empty
@@ -235,9 +237,14 @@ class TNCExporter:
                     parsed = self.parse_packet(packet)
                     self.packet_metrics(parsed, self.location)
                     logging.debug(f"Updated metrics for packet received from TNC")
+                    packets_to_summarize.append(packet)
                     self.listener.packet_queue.task_done()
             except Exception:
                 logging.exception("Error processing packet into metrics: ")
+            try:
+                self.summary_metrics(packets_to_summarize)
+            except Exception:
+                logging.exception("Error processing summary metrics from packets: ")
             # await end of sleep cycle to update metrics, defined by update-interval parameter
             end = datetime.datetime.now()
             wait_seconds = (start + self.stats_interval - end).total_seconds()
@@ -258,7 +265,9 @@ class TNCExporter:
             PACKET_TX.inc({'path': path_type})
         else:
             # if a packet is received and decoded, increment PACKET_RX metric
-            PACKET_RX.inc({'ax25_frame_type': packet_info['frame_type'], 'path': path_type})
+            PACKET_RX.inc({'ax25_frame_type': packet_info['frame_type'],
+                           'path': path_type,
+                           'from_cs': packet_info['call_from']})
             if all([v is not None for v in packet_info['lat_lon']]) and tnc_latlon is not None:
                 # calculate distance between TNC location and packet's reported lat/lon
                 distance_from_tnc = self.haversine_distance(pos1=tnc_latlon,
@@ -269,3 +278,13 @@ class TNCExporter:
                 if packet_info['hops_count'] == 0:
                     # No hops means the packet was received via RF, so update RF_PACKET_DISTANCE
                     RF_PACKET_DISTANCE.observe({'type': 'unknown'}, distance_from_tnc)
+
+    def summary_metrics(self, packets: list):
+        """
+        Function that processes multiple PacketInfo object
+         and updates Prometheus metrics based on aggregate measurements across the update interval.
+
+        :param packets: a list of PacketInfo objects containing packet metadata
+        :param tnc_latlon: a tuple defining (lat, lon) of the TNC in decimal degrees
+        """
+        pass
