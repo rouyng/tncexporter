@@ -341,7 +341,7 @@
         {
           "exemplar": true,
           "expr": "tnc_packet_rx_recent",
-          "interval": "10s",
+          "interval": "30s",
           "legendFormat": "{{interval}}",
           "refId": "A"
         }
@@ -615,7 +615,7 @@
         {
           "exemplar": true,
           "expr": "tnc_packet_tx_recent",
-          "interval": "10s",
+          "interval": "30s",
           "legendFormat": "{{interval}}",
           "refId": "A"
         }
@@ -744,7 +744,7 @@
       "type": "timeseries"
     }
   ],
-  "refresh": "30s",
+  "refresh": "10s",
   "schemaVersion": 30,
   "style": "dark",
   "tags": [],
@@ -752,7 +752,7 @@
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {
@@ -771,5 +771,5 @@
   "timezone": "",
   "title": "TNC Exporter",
   "uid": "sS_GTAg7k",
-  "version": 16
+  "version": 17
 }
