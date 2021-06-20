@@ -262,7 +262,7 @@
           "refId": "A"
         }
       ],
-      "title": "Max RX range (km)",
+      "title": "Max RX range of APRS position packets (km)",
       "type": "timeseries"
     },
     {
@@ -435,7 +435,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Packets RX/minute by Path",
+      "title": "Packets RX/minute by APRS Path Type",
       "type": "timeseries"
     },
     {
@@ -540,7 +540,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Packets RX/minute by Frame Type",
+      "title": "Packets RX/minute by AX.25 Frame Type",
       "type": "timeseries"
     },
     {
@@ -740,11 +740,11 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Packets TX/minute by Path",
+      "title": "Packets TX/minute by APRS Path Type",
       "type": "timeseries"
     }
   ],
-  "refresh": "10s",
+  "refresh": "30s",
   "schemaVersion": 30,
   "style": "dark",
   "tags": [],
@@ -771,5 +771,5 @@
   "timezone": "",
   "title": "TNC Exporter",
   "uid": "sS_GTAg7k",
-  "version": 17
+  "version": 19
 }
