@@ -7,7 +7,7 @@ name = "pypi"
 prometheus-client = "*"
 pytest = "*"
 flake8 = "*"
-aiohttp = "*"
+aiohttp = ">=3.7.4"
 aioprometheus = "*"
 
 [dev-packages]
