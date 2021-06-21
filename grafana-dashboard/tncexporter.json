@@ -133,6 +133,7 @@
           "color": {
             "mode": "thresholds"
           },
+          "displayName": "${__series.name}",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -771,5 +772,5 @@
   "timezone": "",
   "title": "TNC Exporter",
   "uid": "sS_GTAg7k",
-  "version": 19
+  "version": 20
 }
