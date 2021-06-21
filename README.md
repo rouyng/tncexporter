@@ -25,11 +25,16 @@ Grafana isn't the only way to visualize Prometheus time-series data. You can use
 The Prometheus and Grafana combo can also be used to monitor a variety of non-TNC-related metrics. As a starting point, I suggest checking out Prometheus' official [node exporter](https://github.com/prometheus/node_exporter) and [this tutorial](https://grafana.com/oss/prometheus/exporters/node-exporter/) for setting it up. This shows a variety of hardware and OS-level metrics, such as CPU usage, network activity, memory utilization and disk space. This can be very useful to monitor your TNC host machine's status alongside the TNC-specific metrics provided by this exporter.
 
 ## Metrics exposed by TNC exporter
-- packet_rx: Number of packets received and decoded (counter)
-- packet_tx: Number of packets transmitted (counter)
-- packet_distance: Distance of received packets from TNC, for those packet types that report location data (histogram)
-- packet_rx_type: Count of packets received by type (counter)
-- packet_rx_callsign: Count of packets received by callsign (histogram)
+TNC exporter provides the following metrics. See prometheus docs for a [discussion of the different types of metrics](https://prometheus.io/docs/concepts/metric_types/).
+
+- PACKET_RX: Counter, Number of packets received and decoded. Labeled by path (digipeat or simplex), originating callsign and frame type (U, I,  or S).
+- PACKET_TX: Counter, Number of packets transmitted
+- PACKET_DISTANCE = Summary, Distance in meters of received position packets from TNC (digipeated and RF)
+- RF_PACKET_DISTANCE = Summary, Distance in meters of received position packets from TNC (RF only).
+- MAX_DISTANCE_RECENT = Gauge, Maximum range in meters of position frames received over last time period. Includes digipeated packets.
+- MAX_RF_DISTANCE_RECENT = Gauge, Maximum range in meters of non-digipeated position packets received over last time period.
+- PACKET_RX_RECENT = Gauge, number of packets received over last time period.
+- PACKET_TX_RECENT = Gauge, number of packets transmitted over last time period.
 
 ## Installation guide
 In order to visualize TNC metrics using this exporter, there are four steps:
