@@ -55,6 +55,8 @@ Please consult the [Prometheus](https://prometheus.io/docs/prometheus/latest/get
 ### Installing prometheus
 A full guide on how to install and configure prometheus is outside the scope of this readme. Please consult the [official Prometheus installation guide](https://prometheus.io/docs/prometheus/latest/installation/) or the many other online tutorials available.
 
+Once prometheus is installed, you will have to [configure it](https://prometheus.io/docs/introduction/first_steps/#configuring-prometheus) to scrape the metrics endpoint created by TNC exporter.  
+
 ### Installing TNC exporter
 
 *TODO: manual installation instructions*
@@ -68,6 +70,16 @@ There are multiple command line options to configure tncexporter. See descriptio
 
 `python -m tncexporter --help` 
 
+By default, TNC exporter will expose metrics at port 9110. This should be set as your scrape target within `prometheus.yml` as follows:
+
+```yaml
+scrape_configs:
+  - job_name: tncexporter
+    static_configs:
+      - targets: ['localhost:9110']
+```
+
+Once you have prometheus configured and tncexporter is running, you can check the prometheus web interface to make sure it is collecting metrics, by visiting http://*prometheus-server-ip*:9090/targets
 
 ### Installing and configuring grafana
 A full guide on how to install and configure grafana is outside the scope of this readme. Please consult the [official Grafana installation guide](https://grafana.com/docs/grafana/latest/installation/) or the many other online tutorials available.
