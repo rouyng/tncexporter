@@ -18,14 +18,14 @@ def main():
         type=str,
         dest="tnc_url",
         default="http://localhost:8000",
-        help="the URL for the TNC's AGWPE TCP/IP interface",
+        help="URL and port for the TNC's AGWPE TCP/IP interface. Default is http://localhost:8000",
     )
     parser.add_argument(
         "--host",
         metavar="<exporter host>",
         type=str,
         default="0.0.0.0",
-        help="The address to expose collected metrics from. Default is all interfaces.",
+        help="The IP address to expose collected metrics from. Default is 0.0.0.0 (all interfaces).",
     )
     parser.add_argument(
         "--port",
@@ -41,7 +41,9 @@ def main():
         dest="update_interval",
         default=30,
         help="The number of seconds between updates of TNC metrics. This determines the rate at "
-             "which the prometheus client exposes new metrics. Default is 30 seconds",
+             "which the prometheus client exposes new metrics and calculates summary metrics."
+             " Default is 30 seconds. Changing this may affect how metrics appear on your "
+             "grafana dashboard.",
     )
     parser.add_argument(
         "--latitude",
@@ -49,21 +51,23 @@ def main():
         type=float,
         default=None,
         help="The latitude of the TNC position in decimal format. North latitudes are positive,"
-             "south are negative."
+             "south are negative. If this is empty, the exporter will not calculate the relative"
+             " distance of position packets."
     )
     parser.add_argument(
         "--longitude",
-        metavar="<receiver longitude>",
+        metavar="<tnc longitude>",
         type=float,
         default=None,
         help="The longitude of the TNC position in decimal format. East longitudes are positive, "
-             "west are negative.",
+             "west are negative. If this is empty, the exporter will not calculate the relative"
+             " distance of position packets."
     )
     parser.add_argument(
-        "--debug", action="store_true", default=False, help="Print debug output"
+        "--debug", action="store_true", default=False, help="Print debug messages to stdout"
     )
     parser.add_argument(
-        "--quiet", action="store_true", default=False, help="Only print errors to stdout"
+        "--quiet", action="store_true", default=False, help="Only print error messages to stdout"
     )
 
     args = parser.parse_args()
