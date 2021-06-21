@@ -29,12 +29,14 @@ TNC exporter provides the following metrics. See prometheus docs for a [discussi
 
 - PACKET_RX: Counter, Number of packets received and decoded. Labeled by path (digipeat or simplex), originating callsign and frame type (U, I,  or S).
 - PACKET_TX: Counter, Number of packets transmitted
-- PACKET_DISTANCE: Summary, Distance in meters of received position packets from TNC (digipeated and RF)
-- RF_PACKET_DISTANCE: Summary, Distance in meters of received position packets from TNC (RF only).
 - MAX_DISTANCE_RECENT: Gauge, Maximum range in meters of position frames received over last time period. Includes digipeated packets.
 - MAX_RF_DISTANCE_RECENT: Gauge, Maximum range in meters of non-digipeated position packets received over last time period.
 - PACKET_RX_RECENT: Gauge, number of packets received over last time period.
 - PACKET_TX_RECENT: Gauge, number of packets transmitted over last time period.
+
+*Currently not used in dashboard*
+- PACKET_DISTANCE: Summary, Distance in meters of received position packets from TNC (digipeated and RF).
+- RF_PACKET_DISTANCE: Summary, Distance in meters of received position packets from TNC (RF only).
 
 ## Installation guide
 In order to visualize TNC metrics using this exporter, there are four steps:
