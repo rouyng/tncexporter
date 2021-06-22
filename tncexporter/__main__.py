@@ -105,13 +105,18 @@ def main():
         stats_interval=args.update_interval,
         receiver_location=location
     )
-    loop.run_until_complete(exp.start())
     try:
-        loop.run_forever()
+        # start metrics server and listener
+        loop.run_until_complete(exp.start())
     except KeyboardInterrupt:
         pass
-    finally:
-        loop.run_until_complete(exp.stop())
+    else:
+        try:
+            loop.run_forever()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            loop.run_until_complete(exp.stop())
     loop.stop()
     loop.close()
 

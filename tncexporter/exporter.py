@@ -43,28 +43,24 @@ class TNCExporter:
             stats_interval: int = 60,
             receiver_location: tuple = None,
             loop: AbstractEventLoop = None) -> None:
-        try:
-            self.listener = Listener(tnc_url)
-        except ConnectionRefusedError:
-            logging.error("Could not create TNC listener")
-            sys.exit()
-        else:
-            self.loop = loop or asyncio.get_event_loop()
-            self.host = host
-            self.port = port
-            self.stats_interval = datetime.timedelta(seconds=stats_interval)
-            self.location = receiver_location
-            self.metrics_task = None
-            self.listener_task = None
-            self.server = Service()
-            self.register_metrics((PACKET_RX,
-                                   PACKET_TX,
-                                   PACKET_DISTANCE,
-                                   RF_PACKET_DISTANCE,
-                                   MAX_DISTANCE_RECENT,
-                                   PACKET_RX_RECENT,
-                                   PACKET_TX_RECENT
-                                   ))
+        self.loop = loop or asyncio.get_event_loop()
+        self.tnc_url = tnc_url
+        self.host = host
+        self.port = port
+        self.stats_interval = datetime.timedelta(seconds=stats_interval)
+        self.location = receiver_location
+        self.listener = None
+        self.metrics_task = None
+        self.listener_task = None
+        self.server = Service()
+        self.register_metrics((PACKET_RX,
+                               PACKET_TX,
+                               PACKET_DISTANCE,
+                               RF_PACKET_DISTANCE,
+                               MAX_DISTANCE_RECENT,
+                               PACKET_RX_RECENT,
+                               PACKET_TX_RECENT
+                               ))
 
     def register_metrics(self, metrics_list: tuple):
         """Register metrics  with aioprometheus service"""
@@ -72,9 +68,13 @@ class TNCExporter:
             self.server.register(m)
 
     async def start(self) -> None:
-        """ Start the monitor """
+        """ Start the TNC listener and prometheus service, create async tasks"""
+        # start TNC listener and attempt to connect to TNC
+        self.listener = Listener(self.tnc_url)
+        # start prometheus metrics server
         await self.server.start(addr=self.host, port=self.port)
-        logger.info(f"serving TNC prometheus metrics on: {self.server.metrics_url}")
+        logger.info(f"Serving TNC prometheus metrics on: {self.server.metrics_url}")
+        # create long-running asyncio tasks to listen for packets and update metrics
         self.metrics_task = asyncio.create_task(self.metric_updater())
         self.listener_task = asyncio.create_task(self.listener.receive_packets())
 
