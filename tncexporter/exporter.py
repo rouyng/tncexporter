@@ -9,7 +9,7 @@ import sys
 from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE,\
     RF_PACKET_DISTANCE, MAX_DISTANCE_RECENT, PACKET_RX_RECENT, PACKET_TX_RECENT
 from math import asin, cos, sin, sqrt, radians
-from typing import TypedDict
+from typing import TypedDict, List
 import asyncio
 import datetime
 import functools
@@ -286,7 +286,7 @@ class TNCExporter:
                     # No hops means the packet was received via RF, so update RF_PACKET_DISTANCE
                     RF_PACKET_DISTANCE.observe({'type': 'unknown'}, distance_from_tnc)
 
-    def summary_metrics(self, packets: list[PacketInfo]):
+    def summary_metrics(self, packets: List[PacketInfo]):
         """
         Function that processes multiple PacketInfo object
          and updates Prometheus metrics based on aggregate measurements across the update interval.
