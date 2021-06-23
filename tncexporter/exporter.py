@@ -318,7 +318,7 @@ class TNCExporter:
                     pass
 
         # Update summary metrics for last update interval
-
+        # TODO: additional summary metrics with labels for path and frame type
         MAX_DISTANCE_RECENT.set({'interval': self.stats_interval.seconds, 'path': 'Simplex'},
                                 max_rf_distance)
         MAX_DISTANCE_RECENT.set({'interval': self.stats_interval.seconds, 'path': 'Digi'},

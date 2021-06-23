@@ -17,8 +17,8 @@ PACKET_TX = Counter("tnc_packet_tx",
                     "Number of packets transmitted")
 
 
-# Metrics tracking distances of received frames. Only calculated for frames that report
-# position data (APRS)
+# Summary metrics tracking distances of received frames. Only calculated for frames that report
+# position data (APRS). Not currently used in dashboard
 PACKET_DISTANCE = Summary("tnc_packet_distance",
                           "Distance in meters of received position packets from TNC "
                           "(digipeated and RF)")

@@ -62,11 +62,15 @@ Once prometheus is installed, you will have to [configure it](https://prometheus
 *TODO: manual installation instructions*
 
 #### Running TNC exporter
-The basic command to run tncexporter is:
+The basic command to run TNC exporter is:
 
 `python -m tncexporter`
 
-There are multiple command line options to configure tncexporter. See descriptions of these by running:
+If you want distance metrics, add your TNC's latitude and longitude as follows (S latitudes and W longitudes are negative):
+
+`python -m tncexporter --latitude 40.7484 --longitude -73.9855`
+
+There are multiple command line options to configure TNC exporter. See descriptions of these by running:
 
 `python -m tncexporter --help` 
 
@@ -79,36 +83,36 @@ scrape_configs:
       - targets: ['localhost:9110']
 ```
 
-Once you have prometheus configured and tncexporter is running, you can check the prometheus web interface to make sure it is collecting metrics, by visiting http://*prometheus-server-ip*:9090/targets
+Once you have prometheus configured and TNC exporter is running, you can check the prometheus web interface to make sure it is collecting metrics, by visiting http://*prometheus-server-ip*:9090/targets
 
 ### Installing and configuring grafana
 A full guide on how to install and configure grafana is outside the scope of this readme. Please consult the [official Grafana installation guide](https://grafana.com/docs/grafana/latest/installation/) or the many other online tutorials available.
 
-Once you have a working installation of grafana, [import](https://grafana.com/docs/grafana/latest/dashboards/export-import/) the tncexporter dashboard from the [dashboard json file](grafana-dashboard/tncexporter.json) included in this repository.
+Once you have a working installation of grafana, [import](https://grafana.com/docs/grafana/latest/dashboards/export-import/) the TNC exporter dashboard from the [dashboard json file](grafana-dashboard/tncexporter.json) included in this repository.
 
 ## Support and common issues
 
 Below are some common questions and issues that you might encounter.
 
 ### Q: I'm having trouble setting up prometheus/grafana/direwolf/python, can you help me?
-tncexporter relies on a somewhat complex stack of services to function. You should be prepared to spend a small amount of time familiarizing yourself with all these services for best results. As a single, unpaid open source developer I have limited capacity to personally provide support for all components of this stack. Please do not open issues in this repo for generic prometheus/grafana setup questions, I will close them.
+TNC exporter relies on a somewhat complex stack of services to function. You should be prepared to spend a small amount of time familiarizing yourself with all these services for best results. As a single, unpaid open source developer I have limited capacity to personally provide support for all components of this stack. Please do not open issues in this repo for generic prometheus/grafana setup questions, I will close them.
 
-Prometheus and grafana are used in this project because there are huge communities around these services and many tutorials and troubleshooting tips are available online. For these applications, please refer to the prometheus/grafana installation guides linked in the "Installation" section below. Many other resources are available via google, youtube and stackoverflow. If you are new to these services, a good tutorial experience is to follow this [node exporter guide](https://grafana.com/oss/prometheus/exporters/node-exporter/). Once you have done this, you are assured of a functioning prometheus/grafana setup and can proceed to configuring tncexporter. 
+Prometheus and grafana are used in this project because there are huge communities around these services and many tutorials and troubleshooting tips are available online. For these applications, please refer to the prometheus/grafana installation guides linked in the "Installation" section below. Many other resources are available via google, youtube and stackoverflow. If you are new to these services, a good tutorial experience is to follow this [node exporter guide](https://grafana.com/oss/prometheus/exporters/node-exporter/). Once you have done this, you are assured of a functioning prometheus/grafana setup and can proceed to configuring TNC exporter. 
 
 If you are having issues setting up direwolf, please refer to that project's excellent [documentation](https://github.com/wb2osz/direwolf/tree/master/doc). In the rare case you have an issue not covered by the documentation, the [direwolf mailing list](https://groups.io/g/direwolf) is very helpful.
 
-If you are having issues installing python, I recommend either [this official installation guide](https://wiki.python.org/moin/BeginnersGuide/Download), or [this more in depth unofficial guide](https://docs.python-guide.org/starting/installation/). Please note that tncexporter requires Python 3.9. Many issues are caused by having an outdated Python version installed, so please check the installed version first.
+If you are having issues installing python, I recommend either [this official installation guide](https://wiki.python.org/moin/BeginnersGuide/Download), or [this more in depth unofficial guide](https://docs.python-guide.org/starting/installation/). Please note that TNC exporter requires Python 3.9. Many issues are caused by having an outdated Python version installed, so please check the installed version first.
 
 ### Q: I changed the exporter's update-interval argument and now the plots in some Grafana panels seem wrong. What's going on?
-I have tuned the Grafana dashboard panels to match the tncexporter's default 30 second metrics collection interval. If you adjust this interval by changing the update-interval command line argument, you may need to change some panel settings accordingly. This is only recommended for advanced users who are interested in digging in to the details of Grafana dashboard configuration.
+I have tuned the Grafana dashboard panels to match the TNC exporter's default 30 second metrics collection interval. If you adjust this interval by changing the update-interval command line argument, you may need to change some panel settings accordingly. This is only recommended for advanced users who are interested in digging in to the details of Grafana dashboard configuration.
 
 ### Q: APRS position packets aren't updating distance metrics, what's up with that?
 
-Make sure you have `--latitude` and `--longitude` command line options set with your desired coordinates when you start tncexporter. If you're still seeing issues with position packets, please open an [issue](https://github.com/rouyng/tncexporter/issues). The coordinate parser used in tncexporter detects the most common lat/lon formats used by APRS devices. However there seems to be a lack of standardization for this section of the packet, so it's possible I have missed one. 
+Make sure you have `--latitude` and `--longitude` command line options set with your desired coordinates when you start TNC exporter. If you're still seeing issues with position packets, please open an [issue](https://github.com/rouyng/tncexporter/issues). The coordinate parser used in TNC exporter detects the most common lat/lon formats used by APRS devices. However, there seems to be a lack of standardization for this section of the packet. So it is possible there are remaining formats that aren't currently parsed
 
-### Q: I believe I have found a bug in tncexporter, where do I report it?
+### Q: I believe I have found a bug in TNC exporter, where do I report it?
 
-[Open an issue in the github repo](https://github.com/rouyng/tncexporter/issues). It's helpful to include the output of tncexporter with the `--debug` command line option activated.
+[Open an issue in the github repo](https://github.com/rouyng/tncexporter/issues). It's helpful to include the output of TNC exporter with the `--debug` command line option activated.
 
 
 ## TODO
@@ -121,7 +125,7 @@ Make sure you have `--latitude` and `--longitude` command line options set with 
 If you have a bug report or feature request, please open an issue via Github. Code contributions are welcome, please open an issue to propose and discuss changes before submitting substantial pull requests.
 
 ## Acknowledgements
-This exporter was inspired by claws' excellent [dump1090-exporter](https://github.com/claws/dump1090-exporter/). The design of tncexporter owes a lot to this project as well as claw's [aioprometheus library](https://github.com/claws/aioprometheus).
+This exporter was inspired by claws' excellent [dump1090-exporter](https://github.com/claws/dump1090-exporter/). The design of TNC exporter owes a lot to this project as well as claw's [aioprometheus library](https://github.com/claws/aioprometheus).
 
 Thanks to WB2OSZ and the rest of the [Direwolf software TNC community](https://groups.io/g/direwolf).
 
