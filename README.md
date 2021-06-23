@@ -1,17 +1,18 @@
 # TNC exporter
 A [prometheus](https://prometheus.io/) exporter for collecting metrics from a [terminal node controller (TNC)](https://en.wikipedia.org/wiki/Terminal_node_controller) used in packet radio networks. These metrics can be visualized in [grafana](https://grafana.com/) using the included dashboard. It utilizes the AGWPE TCP/IP interface, which is implemented by several popular TNC software packages, including [direwolf](https://github.com/wb2osz/direwolf), [UZ7HO sound modem](http://uz7.ho.ua/packetradio.htm) and [AGW Packet Engine](https://www.sv2agw.com/ham#pepro).
 
-- [Why should I use it?](#Why should I use it?)
-- What are prometheus and grafana?
-- Installation guide
-- Customization
-- Support and common issues
-- TODO
-- Contributing
-- License
+- [Why should I use it?](#why-should-i-use-it)
+- [What are prometheus and grafana?](#what-are-prometheus-and-grafana)
+- [Metrics](#metrics)
+- [Installation guide](#installation-guide)
+- [Support and common issues](#support-and-common-issues)
+- [TODO](#todo)
+- [Contributing](#contributing)
+- [Acknowledgements](#acknowledgements)
+- [License](#license)
 
 ## Why should I use it?
-TNC exporter provides a powerful interface for collecting and visualizing metrics from your TNC. Using this exporter, prometheus, and grafana, you can visualize at a glance the quantity of packet RX/TX across your TNC, quantity of packets by different path and frame type, and distance of packets received (for packets that report location data). You can also customize the example grafana dashboard, build your own or directly query metrics using prometheus' built-in tools. 
+TNC exporter provides an interface for collecting and visualizing metrics from your TNC. Using this exporter, prometheus, and grafana, you can visualize at a glance the quantity of packet RX/TX across your TNC, quantity of packets by different path and frame type, and distance of packets received (for packets that report location data). You can also customize the example grafana dashboard, build your own or directly query metrics using prometheus' built-in tools. 
 
 ## What are prometheus and grafana?
 [Prometheus](https://prometheus.io/) is a free, open source monitoring tool that collects and stores time-series data. While prometheus has a build-in web interface, it is primarily designed to store and serve data, not display it. Some programs natively export metrics in a prometheus-friendly format, while others require a helper program called an "exporter" that enables prometheus to pull metrics. Administrators, developers and enthusiasts use Prometheus to monitor everything from CPU usage to network throughput. Prometheus has the flexibility to monitor most data that fits in time-series format.
@@ -24,7 +25,7 @@ Grafana isn't the only way to visualize Prometheus time-series data. You can use
 
 The Prometheus and Grafana combo can also be used to monitor a variety of non-TNC-related metrics. As a starting point, I suggest checking out Prometheus' official [node exporter](https://github.com/prometheus/node_exporter) and [this tutorial](https://grafana.com/oss/prometheus/exporters/node-exporter/) for setting it up. This shows a variety of hardware and OS-level metrics, such as CPU usage, network activity, memory utilization and disk space. This can be very useful to monitor your TNC host machine's status alongside the TNC-specific metrics provided by this exporter.
 
-## Metrics exposed by TNC exporter
+## Metrics
 TNC exporter provides the following metrics. See prometheus docs for a [discussion of the different types of metrics](https://prometheus.io/docs/concepts/metric_types/).
 
 - PACKET_RX: Counter, Number of packets received and decoded. Labeled by path (digipeat or simplex), originating callsign and frame type (U, I,  or S).
@@ -51,6 +52,8 @@ In order to visualize TNC metrics using this exporter, there are four steps:
 TNC exporter requires Python 3.9. You can download Python for all major operating systems [here](https://www.python.org/downloads/).
 
 Please consult the [Prometheus](https://prometheus.io/docs/prometheus/latest/getting_started/) and [Grafana documentation](https://grafana.com/docs/grafana/latest/installation/requirements/) for system requirements of those applications.
+
+The total requirements for all these programs are fairly minimal, and should run happily on a Raspberry Pi alongside Direwolf. 
 
 ### Installing prometheus
 A full guide on how to install and configure prometheus is outside the scope of this readme. Please consult the [official Prometheus installation guide](https://prometheus.io/docs/prometheus/latest/installation/) or the many other online tutorials available.
