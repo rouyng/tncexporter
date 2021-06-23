@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 7,
+  "id": 3,
   "links": [],
   "panels": [
     {
@@ -204,7 +204,7 @@
               "tooltip": false,
               "viz": false
             },
-            "lineInterpolation": "stepAfter",
+            "lineInterpolation": "stepBefore",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
@@ -287,7 +287,7 @@
               "tooltip": false,
               "viz": false
             },
-            "lineInterpolation": "stepAfter",
+            "lineInterpolation": "stepBefore",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
@@ -370,7 +370,7 @@
               "tooltip": false,
               "viz": false
             },
-            "lineInterpolation": "stepAfter",
+            "lineInterpolation": "stepBefore",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
@@ -459,7 +459,7 @@
               "tooltip": false,
               "viz": false
             },
-            "lineInterpolation": "stepAfter",
+            "lineInterpolation": "stepBefore",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
@@ -565,7 +565,7 @@
               "tooltip": false,
               "viz": false
             },
-            "lineInterpolation": "stepAfter",
+            "lineInterpolation": "stepBefore",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
@@ -644,7 +644,7 @@
               "tooltip": false,
               "viz": false
             },
-            "lineInterpolation": "stepAfter",
+            "lineInterpolation": "stepBefore",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
@@ -771,6 +771,6 @@
   },
   "timezone": "",
   "title": "TNC Exporter",
-  "uid": "sS_GTAg7k",
-  "version": 20
+  "uid": "dsGvT6gnz",
+  "version": 2
 }
