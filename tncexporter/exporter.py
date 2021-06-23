@@ -319,10 +319,14 @@ class TNCExporter:
 
         # Update summary metrics for last update interval
         # TODO: additional summary metrics with labels for path and frame type
-        MAX_DISTANCE_RECENT.set({'interval': self.stats_interval.seconds, 'path': 'Simplex'},
+        MAX_DISTANCE_RECENT.set({'interval': f'Last {self.stats_interval.seconds} seconds',
+                                 'path': 'Simplex'},
                                 max_rf_distance)
-        MAX_DISTANCE_RECENT.set({'interval': self.stats_interval.seconds, 'path': 'Digi'},
+        MAX_DISTANCE_RECENT.set({'interval': f'Last {self.stats_interval.seconds} seconds',
+                                 'path': 'Digi'},
                                 max_digi_distance)
-        PACKET_RX_RECENT.set({'interval': self.stats_interval.seconds}, packets_rx_count)
-        PACKET_TX_RECENT.set({'interval': self.stats_interval.seconds}, packets_tx_count)
+        PACKET_RX_RECENT.set({'interval': f'Last {self.stats_interval.seconds} seconds'},
+                             packets_rx_count)
+        PACKET_TX_RECENT.set({'interval': f'Last {self.stats_interval.seconds} seconds'},
+                             packets_tx_count)
         logging.info("Updated summary metrics")
