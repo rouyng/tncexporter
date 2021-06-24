@@ -134,6 +134,10 @@ class TNCExporter:
         :param raw_packet: packet bytestrings
         :returns: Typed dictionary containing metadata
         :rtype: PacketInfo"""
+
+        # TODO: KISS parsing
+        # reference: https://github.com/ampledata/kiss
+
         len_data = int.from_bytes(raw_packet[28:32], signed=False, byteorder="little")
         frame_type = chr(raw_packet[4]).upper()
         try:
