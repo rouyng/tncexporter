@@ -40,10 +40,12 @@ class TNCExporter:
             tnc_url: str,
             host: str = None,
             port: int = 9105,
+            kiss_mode: bool = False,
             stats_interval: int = 60,
             receiver_location: tuple = None,
             loop: AbstractEventLoop = None) -> None:
         self.loop = loop or asyncio.get_event_loop()
+        self.kiss_mode = kiss_mode
         self.tnc_url = tnc_url
         self.host = host
         self.port = port
@@ -129,14 +131,11 @@ class TNCExporter:
         return distance
 
     @staticmethod
-    def parse_packet(raw_packet):
-        """Parse packet bytestring, create a PacketInfo object
+    def parse_packet_agw(raw_packet: bytes) -> PacketInfo:
+        """Parse AGW-format packet bytes, create a PacketInfo object
         :param raw_packet: packet bytestrings
         :returns: Typed dictionary containing metadata
         :rtype: PacketInfo"""
-
-        # TODO: KISS parsing
-        # reference: https://github.com/ampledata/kiss
 
         len_data = int.from_bytes(raw_packet[28:32], signed=False, byteorder="little")
         frame_type = chr(raw_packet[4]).upper()
@@ -189,6 +188,7 @@ class TNCExporter:
                         and re.fullmatch(wide_regex, h) is None]
             except IndexError:
                 pass
+            # TODO: refactor lat/lon regex search into function
             try:
                 # parse latitude and longitude from position packets
                 latlon_regex = r"([0-9][0-9][0-9][0-9]\.[0-9][0-9])(?:[0-9]|,){0,5}(N|S).{0,2}" \
@@ -233,6 +233,44 @@ class TNCExporter:
         logging.debug(f"Decoded packet: {decoded_info}")
         return decoded_info
 
+    @staticmethod
+    def parse_packet_kiss(raw_packet: bytes) -> PacketInfo:
+        """Parse KISS-format packet bytes, create a PacketInfo object
+        :param raw_packet: packet bytestrings
+        :returns: Typed dictionary containing metadata
+        :rtype: PacketInfo"""
+
+        # TODO: finish KISS parsing
+
+        frame_type = None
+        len_data = None
+        call_from = None
+        call_to = None
+        timestamp = None
+        latitude = None
+        longitude = None
+        hops = []
+
+        decoded_info = PacketInfo(
+            frame_type=frame_type,
+            data_len=len_data,
+            call_from=call_from,
+            call_to=call_to,
+            timestamp=timestamp,
+            hops_count=len(hops),
+            hops_path=hops,
+            lat_lon=(latitude, longitude)
+        )
+        logging.debug(f"Decoded packet: {decoded_info}")
+        return decoded_info
+
+    @staticmethod
+    def decode_mic_e(data_field: bytes):
+        # TODO: function for Mic-E decode
+        return None
+
+
+
     async def metric_updater(self):
         """Asynchronous coroutine function that reads the queue of received packets and calls
         packet_metrics on each packet in the queue. Runs on an interval defined by the update
@@ -245,7 +283,11 @@ class TNCExporter:
                 # Only try to get packet bytestrings from the queue if it is not empty
                 while not self.listener.packet_queue.empty():
                     packet = await self.listener.packet_queue.get()
-                    parsed = self.parse_packet(packet)
+                    # check if KISS mode is turned on, otherwise use AGW packet parser
+                    if self.kiss_mode:
+                        parsed = self.parse_packet_kiss(packet)
+                    else:
+                        parsed = self.parse_packet_agw(packet)
                     self.packet_metrics(parsed)
                     logging.debug(f"Updated metrics for packet received from TNC")
                     packets_to_summarize.append(parsed)
