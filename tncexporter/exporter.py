@@ -6,10 +6,11 @@ process_packets is called from the main application loop
 """
 import sys
 
+from aprspy import MICEPacket as mice
 from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE,\
     RF_PACKET_DISTANCE, MAX_DISTANCE_RECENT, PACKET_RX_RECENT, PACKET_TX_RECENT
 from math import asin, cos, sin, sqrt, radians
-from typing import TypedDict, List
+from typing import TypedDict, List, Tuple
 import asyncio
 import datetime
 import functools
@@ -32,6 +33,13 @@ class PacketInfo(TypedDict):
     lat_lon: tuple  # tuple containing two floats representing latitude and longitude
     hops_count: int  # number of hops. Non-digipeated packets should have 0
     hops_path: list  # list of hop callsigns
+
+
+def decode_mic_e(dest_field: str, data_field: str) -> Tuple[float, float]:
+    lat_decode = mice._decode_latitude(dest_field)
+    longitude = mice._decode_longitude(data_field, True, lat_decode[3])
+    latitude = lat_decode[0] - lat_decode[1]
+    return latitude, longitude
 
 
 class TNCExporter:
@@ -213,7 +221,8 @@ class TNCExporter:
                     else:
                         longitude = None
                 else:
-                    logging.debug("No latitude/longitude values found in packet")
+                    logging.debug("No latitude/longitude plaintext values found in packet, trying Mic-E decode")
+                    latitude, longitude = decode_mic_e(call_to, data_string)
             except (IndexError, ValueError):
                 pass
 
@@ -263,13 +272,6 @@ class TNCExporter:
         )
         logging.debug(f"Decoded packet: {decoded_info}")
         return decoded_info
-
-    @staticmethod
-    def decode_mic_e(data_field: bytes):
-        # TODO: function for Mic-E decode
-        return None
-
-
 
     async def metric_updater(self):
         """Asynchronous coroutine function that reads the queue of received packets and calls
@@ -376,3 +378,6 @@ class TNCExporter:
         PACKET_TX_RECENT.set({'interval': f'Last {self.stats_interval.seconds} seconds'},
                              packets_tx_count)
         logging.info("Updated summary metrics")
+
+
+
