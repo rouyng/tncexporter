@@ -269,9 +269,23 @@ class TNCExporter:
 
         call_to = ''.join([chr(b >> 1) for b in raw_packet[1:7]]).strip()
         call_from = ''.join([chr(b >> 1) for b in raw_packet[8:14]]).strip()
-        split_packet = raw_packet[14:].split(b'\x03\xf0')
+        split_packet = raw_packet[15:].split(b'\x03\xf0')
         path_bytes, data_bytes = split_packet[0], split_packet[1]
-        path_string = ''.join([chr(b >> 1) for b in path_bytes]).lstrip('p')
+        path_string = ''.join([chr(b >> 1) for b in path_bytes])
+        path_types = ('RELAY',
+                      'ECHO',
+                      'TRACE',
+                      'GATE',
+                      'BEACON',
+                      'ARISS',
+                      'RFONLY',
+                      'NOGATE')
+        # regex matching all WIDE paths like WIDE1, WIDE 1 1, WIDE2-2 etc
+        wide_regex = "^WIDE(\b|([0-9] [0-9])|[0-9])"
+        hops = [h.strip() for h in re.split('p|q', path_string)
+                if len(h.strip()) > 0
+                and h.strip() not in path_types
+                and re.fullmatch(wide_regex, h.strip()) is None]
         coordinates = parse_coordinates(call_to, data_bytes.decode("ascii"))
         len_data = len(data_bytes)
 
