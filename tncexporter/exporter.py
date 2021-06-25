@@ -63,9 +63,8 @@ def parse_coordinates(dest_field: str, data_field: str) -> Tuple[float, float]:
                 longitude = None
         elif data_field[0] in (" ", ">", "]", "`", "'"):
             # Mic-E type codes above from http://aprs.org/aprs12/mic-e-types.txt
-            # Mic-E decode
-            logging.debug(
-                "No latitude/longitude plaintext values found in packet, trying Mic-E decode")
+            # TODO: fix weird longitude decodings from MIC-E
+            logging.debug("Trying Mic-E decode")
             try:
                 lat_decode = mice._decode_latitude(dest_field)
                 longitude = mice._decode_longitude(data_field, True, lat_decode[3])
