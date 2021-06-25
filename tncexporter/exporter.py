@@ -35,12 +35,42 @@ class PacketInfo(TypedDict):
     hops_path: list  # list of hop callsigns
 
 
-def decode_mic_e(dest_field: str, data_field: str) -> Tuple[float, float]:
-    lat_decode = mice._decode_latitude(dest_field)
-    longitude = mice._decode_longitude(data_field, True, lat_decode[3])
-    latitude = lat_decode[0] - lat_decode[1]
+def parse_coordinates(dest_field: str, data_field: str) -> Tuple[float, float]:
+    latitude= None
+    longitude = None
+    try:
+        # parse latitude and longitude from position packets
+        latlon_regex = r"([0-9][0-9][0-9][0-9]\.[0-9][0-9])(?:[0-9]|,){0,5}(N|S).{0,2}" \
+                       r"([0-1][0-9][0-9][0-9][0-9]\.[0-9][0-9])(?:[0-9]|,){0,5}(E|W)"
+        latlon_match = re.search(latlon_regex, data_field)
+        if latlon_match is not None:
+            logging.debug(f"latlon regex results: {latlon_match.groups()}")
+            raw_lat = latlon_match[1]
+            lat_direction = latlon_match[2]
+            raw_lon = latlon_match[3]
+            lon_direction = latlon_match[4]
+            if lat_direction == 'N':
+                latitude = round(float(raw_lat) / 100, 4)
+            elif lat_direction == 'S':
+                latitude = round(-float(raw_lat) / 100, 4)
+            else:
+                latitude = None
+            if lon_direction == 'E':
+                longitude = round(float(raw_lon) / 100, 4)
+            elif lon_direction == 'W':
+                longitude = round(-float(raw_lon) / 100, 4)
+            else:
+                longitude = None
+        else:
+            # Mic-E decode
+            logging.debug(
+                "No latitude/longitude plaintext values found in packet, trying Mic-E decode")
+            lat_decode = mice._decode_latitude(dest_field)
+            longitude = mice._decode_longitude(data_field, True, lat_decode[3])
+            latitude = lat_decode[0] - lat_decode[1]
+    except (IndexError, ValueError):
+        pass
     return latitude, longitude
-
 
 class TNCExporter:
     def __init__(
@@ -157,10 +187,8 @@ class TNCExporter:
         except UnicodeDecodeError:
             call_to = None
             logging.debug(f"Unicode error when decoding: {raw_packet[18:28]}")
-
         timestamp = None
-        latitude = None
-        longitude = None
+        coordinates=(None, None)
         hops = []
         try:
             data_string = raw_packet[36:].strip(b'\x00').decode("ascii")
@@ -196,36 +224,7 @@ class TNCExporter:
                         and re.fullmatch(wide_regex, h) is None]
             except IndexError:
                 pass
-            # TODO: refactor lat/lon regex search into function
-            try:
-                # parse latitude and longitude from position packets
-                latlon_regex = r"([0-9][0-9][0-9][0-9]\.[0-9][0-9])(?:[0-9]|,){0,5}(N|S).{0,2}" \
-                               r"([0-1][0-9][0-9][0-9][0-9]\.[0-9][0-9])(?:[0-9]|,){0,5}(E|W)"
-                latlon_match = re.search(latlon_regex, data_string)
-                if latlon_match is not None:
-                    logging.debug(f"latlon regex results: {latlon_match.groups()}")
-                    raw_lat = latlon_match[1]
-                    lat_direction = latlon_match[2]
-                    raw_lon = latlon_match[3]
-                    lon_direction = latlon_match[4]
-                    if lat_direction == 'N':
-                        latitude = round(float(raw_lat) / 100, 4)
-                    elif lat_direction == 'S':
-                        latitude = round(-float(raw_lat) / 100, 4)
-                    else:
-                        latitude = None
-                    if lon_direction == 'E':
-                        longitude = round(float(raw_lon) / 100, 4)
-                    elif lon_direction == 'W':
-                        longitude = round(-float(raw_lon) / 100, 4)
-                    else:
-                        longitude = None
-                else:
-                    logging.debug("No latitude/longitude plaintext values found in packet, trying Mic-E decode")
-                    latitude, longitude = decode_mic_e(call_to, data_string)
-            except (IndexError, ValueError):
-                pass
-
+            coordinates = parse_coordinates(call_to, data_string)
         except UnicodeDecodeError:
             logging.error("Error decoding bytes into unicode")
 
@@ -237,7 +236,7 @@ class TNCExporter:
             timestamp=timestamp,
             hops_count=len(hops),
             hops_path=hops,
-            lat_lon=(latitude, longitude)
+            lat_lon=coordinates
         )
         logging.debug(f"Decoded packet: {decoded_info}")
         return decoded_info
@@ -255,20 +254,31 @@ class TNCExporter:
         len_data = None
         call_from = None
         call_to = None
-        timestamp = None
         latitude = None
         longitude = None
         hops = []
 
+        if hex(raw_packet[0]) != "0xc0" and hex(raw_packet[-1]) != "0xc0":
+            logging.debug('Frame delimiters not found')
+        else:
+            packet = raw_packet.strip(b'\xc0')
+            if hex(packet[0]) != "0x0":
+                logging.debug('Not a data frame?')
+        call_to = ''.join([chr(b >> 1) for b in packet[1:7]])
+        call_from = ''.join([chr(b >> 1) for b in packet[8:14]])
+        path_bytes, data_bytes = packet[14:].split(b'\x03\xf0')
+        path_string = ''.join([chr(b >> 1) for b in path_bytes]).lstrip('p')
+        coordinates = parse_coordinates(call_to, data_bytes.decode("ascii"))
+
         decoded_info = PacketInfo(
             frame_type=frame_type,
-            data_len=len_data,
+            data_len=len(data_bytes),
             call_from=call_from,
             call_to=call_to,
-            timestamp=timestamp,
+            timestamp=None,
             hops_count=len(hops),
             hops_path=hops,
-            lat_lon=(latitude, longitude)
+            lat_lon=coordinates
         )
         logging.debug(f"Decoded packet: {decoded_info}")
         return decoded_info
