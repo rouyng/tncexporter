@@ -30,7 +30,8 @@ class Listener:
         self.packet_queue = asyncio.Queue()
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if kiss_mode:
-            self.connect_kiss()
+            self.kiss_mode = True
+            self.connect_kiss(self.tnc_host, self.tnc_port)
         else:
             self.connect_agw(self.tnc_host, self.tnc_port)
         self.api_version = None  # version returned by host API
@@ -103,8 +104,8 @@ class Listener:
         as byte strings.
         """
         while True:
-            packet_bytes = b""
-            bytes_recv = 0
+            packet_bytes: bytes = b""
+            bytes_recv: int = 0
             while bytes_recv < 36:
                 try:
                     chunk = await self.loop.sock_recv(self.client_socket, 4096)
@@ -120,5 +121,13 @@ class Listener:
                 else:
                     packet_bytes += chunk
                     bytes_recv += len(chunk)
-            await self.packet_queue.put(packet_bytes)
+            if self.kiss_mode:
+                # sometimes, a KISS interface will pass multiple packets. Split by frame delimiter
+                # and add each to the queue
+                split_packets = packet_bytes.split(b'\xc0')
+                for p in split_packets:
+                    if len(p) > 0:
+                        await self.packet_queue.put(p)
+            else:
+                await self.packet_queue.put(packet_bytes)
             logging.debug(f"Received packet, total {self.packet_queue.qsize()} in queue")

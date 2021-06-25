@@ -69,6 +69,7 @@ def parse_coordinates(dest_field: str, data_field: str) -> Tuple[float, float]:
                 lat_decode = mice._decode_latitude(dest_field)
                 longitude = mice._decode_longitude(data_field, True, lat_decode[3])
                 latitude = lat_decode[0] - lat_decode[1]
+                logging.debug(f"Mic-E coordinates: {latitude}, {longitude}")
             except ParseError:
                 longitude = None
                 latitude = None
@@ -257,29 +258,25 @@ class TNCExporter:
 
         # TODO: finish KISS parsing
 
-        frame_type = None
         len_data = None
         call_from = None
         call_to = None
         coordinates = (None, None)
         hops = []
 
-        if hex(raw_packet[0]) != "0xc0" and hex(raw_packet[-1]) != "0xc0":
-            raise ValueError('Frame delimiters not found')
-        else:
-            packet = raw_packet.strip(b'\xc0')
-            if hex(packet[0]) != "0x0":
-                raise ValueError('Not a data frame?')
+        if hex(raw_packet[0]) != "0x0":
+            raise ValueError('Not a data frame?')
 
-        call_to = ''.join([chr(b >> 1) for b in packet[1:7]])
-        call_from = ''.join([chr(b >> 1) for b in packet[8:14]])
-        path_bytes, data_bytes = packet[14:].split(b'\x03\xf0')
+        call_to = ''.join([chr(b >> 1) for b in raw_packet[1:7]]).strip()
+        call_from = ''.join([chr(b >> 1) for b in raw_packet[8:14]]).strip()
+        split_packet = raw_packet[14:].split(b'\x03\xf0')
+        path_bytes, data_bytes = split_packet[0], split_packet[1]
         path_string = ''.join([chr(b >> 1) for b in path_bytes]).lstrip('p')
         coordinates = parse_coordinates(call_to, data_bytes.decode("ascii"))
         len_data = len(data_bytes)
 
         decoded_info = PacketInfo(
-            frame_type=frame_type,
+            frame_type=None,
             data_len=len_data,
             call_from=call_from,
             call_to=call_to,
