@@ -115,7 +115,7 @@ class TNCExporter:
     async def start(self) -> None:
         """ Start the TNC listener and prometheus service, create async tasks"""
         # start TNC listener and attempt to connect to TNC
-        self.listener = Listener(self.tnc_url)
+        self.listener = Listener(tnc_url=self.tnc_url, kiss_mode=self.kiss_mode)
         # start prometheus metrics server
         await self.server.start(addr=self.host, port=self.port)
         logger.info(f"Serving TNC prometheus metrics on: {self.server.metrics_url}")
