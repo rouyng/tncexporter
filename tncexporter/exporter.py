@@ -215,8 +215,10 @@ class TNCExporter:
                 # parse list of hops
                 hops_string = re.findall("(?:Via )(.*?)(?: <)", data_string)[0]
                 # tuple of non-WIDE path types that don't represent hops through a digipeater
-                # TODO: research additional paths that may appear in packets?
                 path_types = ('RELAY',
+                              'ECHO',
+                              'TRACE',
+                              'GATE',
                               'BEACON',
                               'ARISS',
                               'RFONLY',
