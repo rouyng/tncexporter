@@ -6,7 +6,7 @@ process_packets is called from the main application loop
 """
 import sys
 
-from aprspy import MICEPacket as mice
+from aprspy import MICEPacket as mice, ParseError
 from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE,\
     RF_PACKET_DISTANCE, MAX_DISTANCE_RECENT, PACKET_RX_RECENT, PACKET_TX_RECENT
 from math import asin, cos, sin, sqrt, radians
@@ -36,7 +36,7 @@ class PacketInfo(TypedDict):
 
 
 def parse_coordinates(dest_field: str, data_field: str) -> Tuple[float, float]:
-    latitude= None
+    latitude = None
     longitude = None
     try:
         # parse latitude and longitude from position packets
@@ -65,12 +65,17 @@ def parse_coordinates(dest_field: str, data_field: str) -> Tuple[float, float]:
             # Mic-E decode
             logging.debug(
                 "No latitude/longitude plaintext values found in packet, trying Mic-E decode")
-            lat_decode = mice._decode_latitude(dest_field)
-            longitude = mice._decode_longitude(data_field, True, lat_decode[3])
-            latitude = lat_decode[0] - lat_decode[1]
+            try:
+                lat_decode = mice._decode_latitude(dest_field)
+                longitude = mice._decode_longitude(data_field, True, lat_decode[3])
+                latitude = lat_decode[0] - lat_decode[1]
+            except ParseError:
+                longitude = None
+                latitude = None
     except (IndexError, ValueError):
         pass
     return latitude, longitude
+
 
 class TNCExporter:
     def __init__(
@@ -171,7 +176,7 @@ class TNCExporter:
     @staticmethod
     def parse_packet_agw(raw_packet: bytes) -> PacketInfo:
         """Parse AGW-format packet bytes, create a PacketInfo object
-        :param raw_packet: packet bytestrings
+        :param raw_packet: packet bytes
         :returns: Typed dictionary containing metadata
         :rtype: PacketInfo"""
 
@@ -244,7 +249,7 @@ class TNCExporter:
     @staticmethod
     def parse_packet_kiss(raw_packet: bytes) -> PacketInfo:
         """Parse KISS-format packet bytes, create a PacketInfo object
-        :param raw_packet: packet bytestrings
+        :param raw_packet: packet bytes
         :returns: Typed dictionary containing metadata
         :rtype: PacketInfo"""
 
@@ -254,25 +259,26 @@ class TNCExporter:
         len_data = None
         call_from = None
         call_to = None
-        latitude = None
-        longitude = None
+        coordinates = (None, None)
         hops = []
 
         if hex(raw_packet[0]) != "0xc0" and hex(raw_packet[-1]) != "0xc0":
-            logging.debug('Frame delimiters not found')
+            raise ValueError('Frame delimiters not found')
         else:
             packet = raw_packet.strip(b'\xc0')
             if hex(packet[0]) != "0x0":
-                logging.debug('Not a data frame?')
+                raise ValueError('Not a data frame?')
+
         call_to = ''.join([chr(b >> 1) for b in packet[1:7]])
         call_from = ''.join([chr(b >> 1) for b in packet[8:14]])
         path_bytes, data_bytes = packet[14:].split(b'\x03\xf0')
         path_string = ''.join([chr(b >> 1) for b in path_bytes]).lstrip('p')
         coordinates = parse_coordinates(call_to, data_bytes.decode("ascii"))
+        len_data = len(data_bytes)
 
         decoded_info = PacketInfo(
             frame_type=frame_type,
-            data_len=len(data_bytes),
+            data_len=len_data,
             call_from=call_from,
             call_to=call_to,
             timestamp=None,
