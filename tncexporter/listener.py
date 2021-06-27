@@ -33,6 +33,7 @@ class Listener:
             self.kiss_mode = True
             self.connect_kiss(self.tnc_host, self.tnc_port)
         else:
+            self.kiss_mode = False
             self.connect_agw(self.tnc_host, self.tnc_port)
         self.api_version = None  # version returned by host API
         self.loop = loop or asyncio.get_event_loop()
