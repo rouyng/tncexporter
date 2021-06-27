@@ -9,7 +9,6 @@ pytest = "*"
 flake8 = "*"
 aiohttp = ">=3.7.4"
 aioprometheus = "*"
-aprspy = "*"
 bitstring = "*"
 
 [dev-packages]
