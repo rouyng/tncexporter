@@ -6,7 +6,6 @@ process_packets is called from the main application loop
 """
 import sys
 
-from aprspy import MICEPacket as mice, ParseError
 from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE,\
     RF_PACKET_DISTANCE, MAX_DISTANCE_RECENT, PACKET_RX_RECENT, PACKET_TX_RECENT
 from math import asin, cos, sin, sqrt, radians
