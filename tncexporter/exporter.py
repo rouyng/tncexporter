@@ -254,8 +254,6 @@ class TNCExporter:
         # TODO: finish KISS parsing
 
         len_data = None
-        call_from = None
-        call_to = None
         frame_type = 'Unknown'
         coordinates = (None, None)
         hops = []
@@ -265,14 +263,15 @@ class TNCExporter:
 
         call_to = ''.join([chr(b >> 1) for b in raw_packet[1:7]]).strip()
         call_from = ''.join([chr(b >> 1) for b in raw_packet[8:14]]).strip()
+
         try:
             split_packet = raw_packet[15:].split(b'\x03\xf0')
             path_bytes, data_bytes = split_packet[0], split_packet[1]
         except IndexError:
+            # If the packet cannot be split by b'\x03\xf0' and raises an IndexError,
+            # it is not a UI frame and therefore not an APRS packet
             pass
         else:
-            # If the packet cannot be split by b'\x03\xf0', it is not a UI frame and therefore not
-            # an APRS packet
             frame_type = 'U'
             path_string = ''.join([chr(b >> 1) for b in path_bytes])
             path_types = ('RELAY',
@@ -285,13 +284,12 @@ class TNCExporter:
                           'NOGATE')
             # regex matching all WIDE paths like WIDE1, WIDE 1 1, WIDE2-2 etc
             wide_regex = "^WIDE(\b|([0-9] [0-9])|[0-9])"
-            hops = [h.strip() for h in re.split('p|q', path_string)
+            hops = [h.strip() for h in re.split('[pq]', path_string)
                     if len(h.strip()) > 0
                     and h.strip() not in path_types
                     and re.fullmatch(wide_regex, h.strip()) is None]
             coordinates = parse_coordinates(call_to, data_bytes.decode("ascii"))
-
-        len_data = len(data_bytes)
+            len_data = len(data_bytes)
 
         decoded_info = PacketInfo(
             frame_type=frame_type,
