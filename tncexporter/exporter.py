@@ -287,7 +287,10 @@ class TNCExporter:
                     if len(h.strip()) > 0
                     and h.strip() not in path_types
                     and re.fullmatch(wide_regex, h.strip()) is None]
-            coordinates = parse_coordinates(data_bytes.decode("ascii"))
+            try:
+                coordinates = parse_coordinates(data_bytes.decode("ascii"))
+            except UnicodeDecodeError:
+                logging.exception("Could not decode data field of packet into ascii: ")
             len_data = len(data_bytes)
 
         decoded_info = PacketInfo(
