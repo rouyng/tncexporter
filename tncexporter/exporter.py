@@ -283,7 +283,7 @@ class TNCExporter:
                           'NOGATE')
             # regex matching all WIDE paths like WIDE1, WIDE 1 1, WIDE2-2 etc
             wide_regex = "^WIDE(\b|([0-9] [0-9])|[0-9])"
-            hops = [h.strip() for h in re.split('[pq]', path_string)
+            hops = [h.strip() for h in re.split('[pqswz]', path_string)
                     if len(h.strip()) > 0
                     and h.strip() not in path_types
                     and re.fullmatch(wide_regex, h.strip()) is None]
