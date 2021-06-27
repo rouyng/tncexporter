@@ -207,7 +207,9 @@ class TNCExporter:
                 except TypeError:
                     pass
             try:
-                # parse list of hops
+                # Parse list of hops
+                # This won't parse the hops list in headers that UI-View creates, and possibly
+                # some other non-standard header formats as well.
                 hops_string = re.findall("(?:Via )(.*?)(?: <)", data_string)[0]
                 # tuple of non-WIDE path types that don't represent hops through a digipeater
                 path_types = ('RELAY',
@@ -283,6 +285,9 @@ class TNCExporter:
                           'NOGATE')
             # regex matching all WIDE paths like WIDE1, WIDE 1 1, WIDE2-2 etc
             wide_regex = "^WIDE(\b|([0-9] [0-9])|[0-9])"
+            # Parse hops list
+            # This won't parse the hops list in headers that UI-View creates, and possibly
+            # some other non-standard header formats as well
             hops = [h.strip() for h in re.split('[pqswz]', path_string)
                     if len(h.strip()) > 0
                     and h.strip() not in path_types
