@@ -35,6 +35,14 @@ def main():
         help="The port to expose collected metrics from. Default is 9110",
     )
     parser.add_argument(
+        "--kiss-mode",
+        action="store_true",
+        default=False,
+        help="Receive and parse packets in KISS mode, instead of the default AGW mode. The host "
+             "and port specificed by the tnc-url argument should be a KISS interface, not an AGW"
+             "interface. Please note that transmit metrics will not be calculated."
+    )
+    parser.add_argument(
         "--update-interval",
         metavar="<stats data refresh interval>",
         type=int,
@@ -102,6 +110,7 @@ def main():
         tnc_url=args.tnc_url,
         host=args.host,
         port=args.port,
+        kiss_mode=args.kiss_mode,
         stats_interval=args.update_interval,
         receiver_location=location
     )

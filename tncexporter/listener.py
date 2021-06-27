@@ -23,17 +23,22 @@ MONITOR_REQUEST = b"\x00\x00\x00\x00\x6D\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
 
 class Listener:
     """Class for creating listener objects that connect to AGWPE TCP/IP API and capture packets"""
-    def __init__(self, tnc_url: str,  loop: AbstractEventLoop = None):
+    def __init__(self, tnc_url: str, kiss_mode: bool = False, loop: AbstractEventLoop = None):
         self.parsed_url = urlparse(tnc_url)
         self.tnc_host = self.parsed_url.hostname  # tnc host to connect to
         self.tnc_port = int(self.parsed_url.port)  # tnc port to listen on
         self.packet_queue = asyncio.Queue()
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connect(self.tnc_host, self.tnc_port)
+        if kiss_mode:
+            self.kiss_mode = True
+            self.connect_kiss(self.tnc_host, self.tnc_port)
+        else:
+            self.kiss_mode = False
+            self.connect_agw(self.tnc_host, self.tnc_port)
         self.api_version = None  # version returned by host API
         self.loop = loop or asyncio.get_event_loop()
 
-    def connect(self, host: str, port: int, retry_delay: int = 10):
+    def connect_agw(self, host: str, port: int, retry_delay: int = 10):
         """Connect to a TNC's AGWPE API"""
         while True:
             try:
@@ -74,6 +79,21 @@ class Listener:
                           version_packet)
             sys.exit()
 
+    def connect_kiss(self, host: str, port: int, retry_delay: int = 10):
+        """Connect to a TNC's KISS TCP interface"""
+        while True:
+            try:
+                logging.info(f"Attempting to connect to TNC at {host}:{port}")
+                self.client_socket.connect((host, port))
+            except ConnectionRefusedError:
+                logging.error(f"Could not connect to TNC at {host}:{port}, connection refused. "
+                              f"Retrying in {retry_delay} seconds")
+                sleep(retry_delay)
+                continue
+            else:
+                logging.info(f"Connection established to TNC at {host}:{port}")
+                break
+
     def disconnect(self):
         """Close client socket connection"""
         self.client_socket.close()
@@ -85,8 +105,8 @@ class Listener:
         as byte strings.
         """
         while True:
-            packet_bytestring = b""
-            bytes_recv = 0
+            packet_bytes: bytes = b""
+            bytes_recv: int = 0
             while bytes_recv < 36:
                 try:
                     chunk = await self.loop.sock_recv(self.client_socket, 4096)
@@ -97,10 +117,21 @@ class Listener:
                     self.client_socket.close()
                     # remake client socket
                     self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    self.connect(self.tnc_host, self.tnc_port)
+                    if self.kiss_mode:
+                        self.connect_kiss(self.tnc_host, self.tnc_port)
+                    else:
+                        self.connect_agw(self.tnc_host, self.tnc_port)
                     continue
                 else:
-                    packet_bytestring += chunk
+                    packet_bytes += chunk
                     bytes_recv += len(chunk)
-            await self.packet_queue.put(packet_bytestring)
+            if self.kiss_mode:
+                # sometimes, a KISS interface will pass multiple packets. Split by frame delimiter
+                # and add each to the queue
+                split_packets = packet_bytes.split(b'\xc0')
+                for p in split_packets:
+                    if len(p) > 0:
+                        await self.packet_queue.put(p)
+            else:
+                await self.packet_queue.put(packet_bytes)
             logging.debug(f"Received packet, total {self.packet_queue.qsize()} in queue")

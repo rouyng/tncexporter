@@ -6,13 +6,12 @@ process_packets is called from the main application loop
 """
 import sys
 
-from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE,\
+from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, \
     RF_PACKET_DISTANCE, MAX_DISTANCE_RECENT, PACKET_RX_RECENT, PACKET_TX_RECENT
 from math import asin, cos, sin, sqrt, radians
-from typing import TypedDict, List
+from typing import TypedDict, List, Tuple
 import asyncio
 import datetime
-import functools
 import logging
 import re
 from .listener import Listener
@@ -34,16 +33,57 @@ class PacketInfo(TypedDict):
     hops_path: list  # list of hop callsigns
 
 
+def parse_coordinates(data_field: str) -> Tuple[float, float]:
+    """
+    Parses latitude and longitude coordinates stored as plaintext in the information field of an
+    APRS packet. Does not parse compressed format or Mic-E format position reports
+    :param data_field: Data/information field of APRS packet
+    :return: A tuple containing float values for latitude and longitude, or a Tuple containing None,
+    None if the coordinates cannot be parsed from the data field
+    """
+    latitude = None
+    longitude = None
+    try:
+        # parse latitude and longitude from position packets
+        latlon_regex = r"([0-9][0-9][0-9][0-9]\.[0-9][0-9])(?:[0-9]|,){0,5}(N|S).{0,2}" \
+                       r"([0-1][0-9][0-9][0-9][0-9]\.[0-9][0-9])(?:[0-9]|,){0,5}(E|W)"
+        latlon_match = re.search(latlon_regex, data_field)
+        if latlon_match is not None:
+            logging.debug(f"latlon regex results: {latlon_match.groups()}")
+            raw_lat = latlon_match[1]
+            lat_direction = latlon_match[2]
+            raw_lon = latlon_match[3]
+            lon_direction = latlon_match[4]
+            if lat_direction == 'N':
+                latitude = round(float(raw_lat) / 100, 4)
+            elif lat_direction == 'S':
+                latitude = round(-float(raw_lat) / 100, 4)
+            else:
+                latitude = None
+            if lon_direction == 'E':
+                longitude = round(float(raw_lon) / 100, 4)
+            elif lon_direction == 'W':
+                longitude = round(-float(raw_lon) / 100, 4)
+            else:
+                longitude = None
+        # TODO: decode position reports from Mic-E and APRS compressed formats
+    except (IndexError, ValueError):
+        pass
+    return latitude, longitude
+
+
 class TNCExporter:
     def __init__(
             self,
             tnc_url: str,
             host: str = None,
             port: int = 9105,
+            kiss_mode: bool = False,
             stats_interval: int = 60,
             receiver_location: tuple = None,
             loop: AbstractEventLoop = None) -> None:
         self.loop = loop or asyncio.get_event_loop()
+        self.kiss_mode = kiss_mode
         self.tnc_url = tnc_url
         self.host = host
         self.port = port
@@ -70,7 +110,7 @@ class TNCExporter:
     async def start(self) -> None:
         """ Start the TNC listener and prometheus service, create async tasks"""
         # start TNC listener and attempt to connect to TNC
-        self.listener = Listener(self.tnc_url)
+        self.listener = Listener(tnc_url=self.tnc_url, kiss_mode=self.kiss_mode)
         # start prometheus metrics server
         await self.server.start(addr=self.host, port=self.port)
         logger.info(f"Serving TNC prometheus metrics on: {self.server.metrics_url}")
@@ -129,11 +169,12 @@ class TNCExporter:
         return distance
 
     @staticmethod
-    def parse_packet(raw_packet):
-        """Parse packet bytestring, create a PacketInfo object
-        :param raw_packet: packet bytestrings
+    def parse_packet_agw(raw_packet: bytes) -> PacketInfo:
+        """Parse AGW-format packet bytes, create a PacketInfo object
+        :param raw_packet: packet bytes
         :returns: Typed dictionary containing metadata
         :rtype: PacketInfo"""
+
         len_data = int.from_bytes(raw_packet[28:32], signed=False, byteorder="little")
         frame_type = chr(raw_packet[4]).upper()
         try:
@@ -146,10 +187,8 @@ class TNCExporter:
         except UnicodeDecodeError:
             call_to = None
             logging.debug(f"Unicode error when decoding: {raw_packet[18:28]}")
-
         timestamp = None
-        latitude = None
-        longitude = None
+        coordinates = (None, None)
         hops = []
         try:
             data_string = raw_packet[36:].strip(b'\x00').decode("ascii")
@@ -168,11 +207,15 @@ class TNCExporter:
                 except TypeError:
                     pass
             try:
-                # parse list of hops
+                # Parse list of hops
+                # This won't parse the hops list in headers that UI-View creates, and possibly
+                # some other non-standard header formats as well.
                 hops_string = re.findall("(?:Via )(.*?)(?: <)", data_string)[0]
                 # tuple of non-WIDE path types that don't represent hops through a digipeater
-                # TODO: research additional paths that may appear in packets?
                 path_types = ('RELAY',
+                              'ECHO',
+                              'TRACE',
+                              'GATE',
                               'BEACON',
                               'ARISS',
                               'RFONLY',
@@ -185,34 +228,7 @@ class TNCExporter:
                         and re.fullmatch(wide_regex, h) is None]
             except IndexError:
                 pass
-            try:
-                # parse latitude and longitude from position packets
-                latlon_regex = r"([0-9][0-9][0-9][0-9]\.[0-9][0-9])(?:[0-9]|,){0,5}(N|S).{0,2}" \
-                               r"([0-1][0-9][0-9][0-9][0-9]\.[0-9][0-9])(?:[0-9]|,){0,5}(E|W)"
-                latlon_match = re.search(latlon_regex, data_string)
-                if latlon_match is not None:
-                    logging.debug(f"latlon regex results: {latlon_match.groups()}")
-                    raw_lat = latlon_match[1]
-                    lat_direction = latlon_match[2]
-                    raw_lon = latlon_match[3]
-                    lon_direction = latlon_match[4]
-                    if lat_direction == 'N':
-                        latitude = round(float(raw_lat) / 100, 4)
-                    elif lat_direction == 'S':
-                        latitude = round(-float(raw_lat) / 100, 4)
-                    else:
-                        latitude = None
-                    if lon_direction == 'E':
-                        longitude = round(float(raw_lon) / 100, 4)
-                    elif lon_direction == 'W':
-                        longitude = round(-float(raw_lon) / 100, 4)
-                    else:
-                        longitude = None
-                else:
-                    logging.debug("No latitude/longitude values found in packet")
-            except (IndexError, ValueError):
-                pass
-
+            coordinates = parse_coordinates(data_string)
         except UnicodeDecodeError:
             logging.error("Error decoding bytes into unicode")
 
@@ -224,7 +240,73 @@ class TNCExporter:
             timestamp=timestamp,
             hops_count=len(hops),
             hops_path=hops,
-            lat_lon=(latitude, longitude)
+            lat_lon=coordinates
+        )
+        logging.debug(f"Decoded packet: {decoded_info}")
+        return decoded_info
+
+    @staticmethod
+    def parse_packet_kiss(raw_packet: bytes) -> PacketInfo:
+        """Parse KISS-format packet bytes, create a PacketInfo object
+        :param raw_packet: packet bytes
+        :returns: Typed dictionary containing metadata
+        :rtype: PacketInfo"""
+
+        # TODO: finish KISS parsing
+
+        len_data = None
+        frame_type = 'Unknown'
+        coordinates = (None, None)
+        hops = []
+
+        if hex(raw_packet[0]) != "0x0":
+            raise ValueError('Not a data frame?')
+
+        call_to = ''.join([chr(b >> 1) for b in raw_packet[1:7]]).strip()
+        call_from = ''.join([chr(b >> 1) for b in raw_packet[8:14]]).strip()
+
+        try:
+            split_packet = raw_packet[15:].split(b'\x03\xf0')
+            path_bytes, data_bytes = split_packet[0], split_packet[1]
+        except IndexError:
+            # If the packet cannot be split by b'\x03\xf0' and raises an IndexError,
+            # it is not a UI frame and therefore not an APRS packet
+            pass
+        else:
+            frame_type = 'U'
+            path_string = ''.join([chr(b >> 1) for b in path_bytes])
+            path_types = ('RELAY',
+                          'ECHO',
+                          'TRACE',
+                          'GATE',
+                          'BEACON',
+                          'ARISS',
+                          'RFONLY',
+                          'NOGATE')
+            # regex matching all WIDE paths like WIDE1, WIDE 1 1, WIDE2-2 etc
+            wide_regex = "^WIDE(\b|([0-9] [0-9])|[0-9])"
+            # Parse hops list
+            # This won't parse the hops list in headers that UI-View creates, and possibly
+            # some other non-standard header formats as well
+            hops = [h.strip() for h in re.split('[pqswz]', path_string)
+                    if len(h.strip()) > 0
+                    and h.strip() not in path_types
+                    and re.fullmatch(wide_regex, h.strip()) is None]
+            try:
+                coordinates = parse_coordinates(data_bytes.decode("ascii"))
+            except UnicodeDecodeError:
+                logging.exception("Could not decode data field of packet into ascii: ")
+            len_data = len(data_bytes)
+
+        decoded_info = PacketInfo(
+            frame_type=frame_type,
+            data_len=len_data,
+            call_from=call_from,
+            call_to=call_to,
+            timestamp=None,
+            hops_count=len(hops),
+            hops_path=hops,
+            lat_lon=coordinates
         )
         logging.debug(f"Decoded packet: {decoded_info}")
         return decoded_info
@@ -241,7 +323,11 @@ class TNCExporter:
                 # Only try to get packet bytestrings from the queue if it is not empty
                 while not self.listener.packet_queue.empty():
                     packet = await self.listener.packet_queue.get()
-                    parsed = self.parse_packet(packet)
+                    # check if KISS mode is turned on, otherwise use AGW packet parser
+                    if self.kiss_mode:
+                        parsed = self.parse_packet_kiss(packet)
+                    else:
+                        parsed = self.parse_packet_agw(packet)
                     self.packet_metrics(parsed)
                     logging.debug(f"Updated metrics for packet received from TNC")
                     packets_to_summarize.append(parsed)
@@ -263,7 +349,6 @@ class TNCExporter:
          and updates Prometheus metrics.
 
         :param packet_info: a PacketInfo object containing packet metadata
-        :param tnc_latlon: a tuple defining (lat, lon) of the TNC in decimal degrees
         """
         path_type = "Digi" if packet_info['hops_count'] > 0 else "Simplex"
         if packet_info['frame_type'] == 'T':
@@ -292,7 +377,6 @@ class TNCExporter:
          and updates Prometheus metrics based on aggregate measurements across the update interval.
 
         :param packets: a list of PacketInfo objects containing packet metadata
-        :param tnc_latlon: a tuple defining (lat, lon) of the TNC in decimal degrees
         """
         packets_rx_count = 0
         packets_tx_count = 0
@@ -305,15 +389,17 @@ class TNCExporter:
             if all([w is not None for w in self.location]):
                 # ValueError is raised if max arg is empty
                 try:
-                    max_rf_distance = max([self.haversine_distance(self.location, p['lat_lon']) for p
-                                           in packets_rx if all([w is not None for w in p['lat_lon']])
-                                           and p['hops_count'] == 0])
+                    max_rf_distance = max(
+                        [self.haversine_distance(self.location, p['lat_lon']) for p
+                         in packets_rx if all([w is not None for w in p['lat_lon']])
+                         and p['hops_count'] == 0])
                 except ValueError:
                     pass
                 try:
-                    max_digi_distance = max([self.haversine_distance(self.location, p['lat_lon']) for p
-                                            in packets_rx if all([w is not None for w in p['lat_lon']])
-                                            and p['hops_count'] > 0])
+                    max_digi_distance = max(
+                        [self.haversine_distance(self.location, p['lat_lon']) for p
+                         in packets_rx if all([w is not None for w in p['lat_lon']])
+                         and p['hops_count'] > 0])
                 except ValueError:
                     pass
 
