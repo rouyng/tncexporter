@@ -6,13 +6,12 @@ process_packets is called from the main application loop
 """
 import sys
 
-from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE,\
+from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, \
     RF_PACKET_DISTANCE, MAX_DISTANCE_RECENT, PACKET_RX_RECENT, PACKET_TX_RECENT
 from math import asin, cos, sin, sqrt, radians
 from typing import TypedDict, List, Tuple
 import asyncio
 import datetime
-import functools
 import logging
 import re
 from .listener import Listener
@@ -189,7 +188,7 @@ class TNCExporter:
             call_to = None
             logging.debug(f"Unicode error when decoding: {raw_packet[18:28]}")
         timestamp = None
-        coordinates=(None, None)
+        coordinates = (None, None)
         hops = []
         try:
             data_string = raw_packet[36:].strip(b'\x00').decode("ascii")
@@ -227,7 +226,7 @@ class TNCExporter:
                         and re.fullmatch(wide_regex, h) is None]
             except IndexError:
                 pass
-            coordinates = parse_coordinates(call_to, data_string)
+            coordinates = parse_coordinates(data_string)
         except UnicodeDecodeError:
             logging.error("Error decoding bytes into unicode")
 
@@ -288,7 +287,7 @@ class TNCExporter:
                     if len(h.strip()) > 0
                     and h.strip() not in path_types
                     and re.fullmatch(wide_regex, h.strip()) is None]
-            coordinates = parse_coordinates(call_to, data_bytes.decode("ascii"))
+            coordinates = parse_coordinates(data_bytes.decode("ascii"))
             len_data = len(data_bytes)
 
         decoded_info = PacketInfo(
@@ -342,7 +341,6 @@ class TNCExporter:
          and updates Prometheus metrics.
 
         :param packet_info: a PacketInfo object containing packet metadata
-        :param tnc_latlon: a tuple defining (lat, lon) of the TNC in decimal degrees
         """
         path_type = "Digi" if packet_info['hops_count'] > 0 else "Simplex"
         if packet_info['frame_type'] == 'T':
@@ -371,7 +369,6 @@ class TNCExporter:
          and updates Prometheus metrics based on aggregate measurements across the update interval.
 
         :param packets: a list of PacketInfo objects containing packet metadata
-        :param tnc_latlon: a tuple defining (lat, lon) of the TNC in decimal degrees
         """
         packets_rx_count = 0
         packets_tx_count = 0
@@ -384,15 +381,17 @@ class TNCExporter:
             if all([w is not None for w in self.location]):
                 # ValueError is raised if max arg is empty
                 try:
-                    max_rf_distance = max([self.haversine_distance(self.location, p['lat_lon']) for p
-                                           in packets_rx if all([w is not None for w in p['lat_lon']])
-                                           and p['hops_count'] == 0])
+                    max_rf_distance = max(
+                        [self.haversine_distance(self.location, p['lat_lon']) for p
+                         in packets_rx if all([w is not None for w in p['lat_lon']])
+                         and p['hops_count'] == 0])
                 except ValueError:
                     pass
                 try:
-                    max_digi_distance = max([self.haversine_distance(self.location, p['lat_lon']) for p
-                                            in packets_rx if all([w is not None for w in p['lat_lon']])
-                                            and p['hops_count'] > 0])
+                    max_digi_distance = max(
+                        [self.haversine_distance(self.location, p['lat_lon']) for p
+                         in packets_rx if all([w is not None for w in p['lat_lon']])
+                         and p['hops_count'] > 0])
                 except ValueError:
                     pass
 
@@ -409,6 +408,3 @@ class TNCExporter:
         PACKET_TX_RECENT.set({'interval': f'Last {self.stats_interval.seconds} seconds'},
                              packets_tx_count)
         logging.info("Updated summary metrics")
-
-
-
