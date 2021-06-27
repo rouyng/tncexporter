@@ -35,7 +35,14 @@ class PacketInfo(TypedDict):
     hops_path: list  # list of hop callsigns
 
 
-def parse_coordinates(dest_field: str, data_field: str) -> Tuple[float, float]:
+def parse_coordinates(data_field: str) -> Tuple[float, float]:
+    """
+    Parses latitude and longitude coordinates stored as plaintext in the information field of an
+    APRS packet. Does not parse compressed format or Mic-E format position reports
+    :param data_field: Data/information field of APRS packet
+    :return: A tuple containing float values for latitude and longitude, or a Tuple containing None,
+    None if the coordinates cannot be parsed from the data field
+    """
     latitude = None
     longitude = None
     try:
@@ -61,18 +68,7 @@ def parse_coordinates(dest_field: str, data_field: str) -> Tuple[float, float]:
                 longitude = round(-float(raw_lon) / 100, 4)
             else:
                 longitude = None
-        elif data_field[0] in (" ", ">", "]", "`", "'"):
-            # Mic-E type codes above from http://aprs.org/aprs12/mic-e-types.txt
-            # TODO: fix weird longitude decodings from MIC-E
-            logging.debug("Trying Mic-E decode")
-            try:
-                lat_decode = mice._decode_latitude(dest_field)
-                longitude = mice._decode_longitude(data_field, True, lat_decode[3])
-                latitude = lat_decode[0] - lat_decode[1]
-                logging.debug(f"Mic-E coordinates: {latitude}, {longitude}")
-            except ParseError:
-                longitude = None
-                latitude = None
+        # TODO: decode position reports from Mic-E and APRS compressed formats
     except (IndexError, ValueError):
         pass
     return latitude, longitude
@@ -261,6 +257,7 @@ class TNCExporter:
         len_data = None
         call_from = None
         call_to = None
+        frame_type = 'Unknown'
         coordinates = (None, None)
         hops = []
 
@@ -269,28 +266,36 @@ class TNCExporter:
 
         call_to = ''.join([chr(b >> 1) for b in raw_packet[1:7]]).strip()
         call_from = ''.join([chr(b >> 1) for b in raw_packet[8:14]]).strip()
-        split_packet = raw_packet[15:].split(b'\x03\xf0')
-        path_bytes, data_bytes = split_packet[0], split_packet[1]
-        path_string = ''.join([chr(b >> 1) for b in path_bytes])
-        path_types = ('RELAY',
-                      'ECHO',
-                      'TRACE',
-                      'GATE',
-                      'BEACON',
-                      'ARISS',
-                      'RFONLY',
-                      'NOGATE')
-        # regex matching all WIDE paths like WIDE1, WIDE 1 1, WIDE2-2 etc
-        wide_regex = "^WIDE(\b|([0-9] [0-9])|[0-9])"
-        hops = [h.strip() for h in re.split('p|q', path_string)
-                if len(h.strip()) > 0
-                and h.strip() not in path_types
-                and re.fullmatch(wide_regex, h.strip()) is None]
-        coordinates = parse_coordinates(call_to, data_bytes.decode("ascii"))
+        try:
+            split_packet = raw_packet[15:].split(b'\x03\xf0')
+            path_bytes, data_bytes = split_packet[0], split_packet[1]
+        except IndexError:
+            pass
+        else:
+            # If the packet cannot be split by b'\x03\xf0', it is not a UI frame and therefore not
+            # an APRS packet
+            frame_type = 'U'
+            path_string = ''.join([chr(b >> 1) for b in path_bytes])
+            path_types = ('RELAY',
+                          'ECHO',
+                          'TRACE',
+                          'GATE',
+                          'BEACON',
+                          'ARISS',
+                          'RFONLY',
+                          'NOGATE')
+            # regex matching all WIDE paths like WIDE1, WIDE 1 1, WIDE2-2 etc
+            wide_regex = "^WIDE(\b|([0-9] [0-9])|[0-9])"
+            hops = [h.strip() for h in re.split('p|q', path_string)
+                    if len(h.strip()) > 0
+                    and h.strip() not in path_types
+                    and re.fullmatch(wide_regex, h.strip()) is None]
+            coordinates = parse_coordinates(call_to, data_bytes.decode("ascii"))
+
         len_data = len(data_bytes)
 
         decoded_info = PacketInfo(
-            frame_type=None,
+            frame_type=frame_type,
             data_len=len_data,
             call_from=call_from,
             call_to=call_to,
