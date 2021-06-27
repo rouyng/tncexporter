@@ -116,7 +116,10 @@ class Listener:
                     self.client_socket.close()
                     # remake client socket
                     self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    self.connect_agw(self.tnc_host, self.tnc_port)
+                    if self.kiss_mode:
+                        self.connect_kiss(self.tnc_host, self.tnc_port)
+                    else:
+                        self.connect_agw(self.tnc_host, self.tnc_port)
                     continue
                 else:
                     packet_bytes += chunk
