@@ -57,7 +57,15 @@ The total requirements for all these programs are fairly minimal, and all should
 
 ### Installing TNC exporter
 
-*TODO: manual installation instructions*
+Download TNC exporter by using the green download button at the top of this repo page. Alternatively, clone the repository with:
+
+`git clone https://github.com/rouyng/tncexporter.git`
+
+Once you have downloaded a local copy of TNC exporter, open a terminal in the tncexporter directory you just created. At this point I highly recommend creating a python virtual environment before installing dependencies ([see instructions here for using Pipenv or the builtin virtualenv tool](https://docs.python-guide.org/dev/virtualenvs/)). Once you have set up a virtual environment (or not) install the additional dependencies by running:
+
+`pip install -r requirements.txt`
+
+Now you should be ready to [run TNC exporter](#running-and-configuring-tnc-exporter).
 
 ### Installing prometheus
 A full guide on how to install and configure prometheus is outside the scope of this readme. Please consult the [official Prometheus installation guide](https://prometheus.io/docs/prometheus/latest/installation/) or the many other online tutorials available.
