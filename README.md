@@ -112,7 +112,7 @@ I have tuned the Grafana dashboard panels to match the TNC exporter's default 30
 ### Q: APRS position packets aren't updating distance metrics, what's up with that?
 Make sure you have `--latitude` and `--longitude` command line options set with your desired coordinates when you start TNC exporter.
 
-Please note that TNC exporter does not parse APRS compressed format or Mic-E format position reports. Only those packets that provide latitude/longitude in plaintext are parsed for distance metrics. 
+Please note that TNC exporter does not parse APRS compressed format or Mic-E format position reports. Only those packets that provide latitude/longitude in plaintext update distance metrics. 
 
  If you're still seeing issues with position packets, please open an [issue](https://github.com/rouyng/tncexporter/issues).
 
@@ -125,9 +125,11 @@ TNC Exporter is designed to use the AGWPE or KISS interfaces that are provided b
 
 ## TODO
 - PyPI packaging
+- Test Python 3.8
+- Test support for other software TNCs such as UZ7HO and AGWPE
 - Create Dockerfile
 - Parse Mic-E and compressed position report formats to update distance metrics 
-- Test support for other software TNCs such as UZ7HO and AGWPE
+- Build integration tests
 - AIS support (via Direwolf, currently have no way to test this as AIS needs a 9600 bps setup)
 
 ## Contributing

@@ -19,6 +19,8 @@ class TestPacketParsing:
     raw AGWPE monitor packets are decoded as expected.
     """
 
+    # TODO: add unit tests for parse_packet_kiss method
+
     def test_parse_1(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00KB6CYS\x00\x00\x00\x00BEACON\x00\x00\x00\x00_' \
                      b'\x00\x00\x00\x00\x00\x00\x00 1:Fm KB6CYS To BEACON Via N6EX-4 <UI pid=F0 ' \
