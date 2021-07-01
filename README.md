@@ -1,4 +1,7 @@
 # TNC exporter
+
+![Screenshot of TNC exporter's Grafana dashboard](grafana-dashboard/dashboard.png)
+
 A [prometheus](https://prometheus.io/) exporter for collecting metrics from a [terminal node controller (TNC)](https://en.wikipedia.org/wiki/Terminal_node_controller) used in packet radio networks. These metrics can be visualized in [grafana](https://grafana.com/) using the included dashboard. It utilizes the AGWPE or KISS TCP/IP interfaces provided by the software TNC [direwolf](https://github.com/wb2osz/direwolf). Other TNCs such as [UZ7HO sound modem](http://uz7.ho.ua/packetradio.htm) and [AGW Packet Engine](https://www.sv2agw.com/ham#pepro) that provide AGWPE or KISS interfaces may also work, but are not officially supported or tested.
 
 - [Why should I use it?](#why-should-i-use-it)
@@ -148,7 +151,7 @@ Below are some common questions and issues that you might encounter.
 ### Q: I'm having trouble setting up prometheus/grafana/direwolf/python, can you help me?
 TNC exporter relies on a somewhat complex stack of services to function. You should be prepared to spend a small amount of time familiarizing yourself with all these services for best results. Please do not open issues in this repo for generic prometheus/grafana setup questions, I will close them.
 
-Prometheus and grafana are used in this project because there are huge communities around these services and many tutorials and troubleshooting tips are available online. For these applications, please refer to the prometheus/grafana installation guides linked in the "Installation" section below. Many other resources are available via google, youtube and stackoverflow. If you are new to these services, a good tutorial experience is to follow this [node exporter guide](https://grafana.com/oss/prometheus/exporters/node-exporter/). Once you have done this, you are assured of a functioning prometheus/grafana setup and can proceed to configuring TNC exporter. 
+Prometheus and grafana are used in this project because there are huge communities around these services and many tutorials and troubleshooting tips are available online. For these applications, please refer to the prometheus/grafana installation guides linked in the [Installation guide](#installation-guide) above. Many other resources are available via google, youtube and stackoverflow. If you are new to these services, a good tutorial experience is to follow this [node exporter guide](https://grafana.com/oss/prometheus/exporters/node-exporter/). Once you have done this, you are assured of a functioning prometheus/grafana setup and can proceed to configuring TNC exporter. 
 
 If you are having issues setting up direwolf, please refer to that project's excellent [documentation](https://github.com/wb2osz/direwolf/tree/master/doc). In the rare case you have an issue not covered by the documentation, the [direwolf mailing list](https://groups.io/g/direwolf) is very helpful.
 
