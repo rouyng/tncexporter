@@ -350,7 +350,7 @@ class TNCExporter:
 
         :param packet_info: a PacketInfo object containing packet metadata
         """
-        path_type = "Digi" if packet_info['hops_count'] > 0 else "Simplex"
+        path_type = "Digipeated" if packet_info['hops_count'] > 0 else "Simplex"
         if packet_info['frame_type'] == 'T':
             # if a packet is transmitted, increment PACKET_TX
             # TODO: more informative labels
@@ -409,7 +409,7 @@ class TNCExporter:
                                  'path': 'Simplex'},
                                 max_rf_distance)
         MAX_DISTANCE_RECENT.set({'interval': f'Last {self.stats_interval.seconds} seconds',
-                                 'path': 'Digi'},
+                                 'path': 'Digipeated'},
                                 max_digi_distance)
         PACKET_RX_RECENT.set({'interval': f'Last {self.stats_interval.seconds} seconds'},
                              packets_rx_count)
