@@ -38,7 +38,7 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 3,
+        "w": 2,
         "x": 0,
         "y": 0
       },
@@ -70,7 +70,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Packet RX Count",
+      "title": "RX Count",
       "type": "stat"
     },
     {
@@ -93,8 +93,8 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 3,
-        "x": 3,
+        "w": 2,
+        "x": 2,
         "y": 0
       },
       "id": 4,
@@ -123,7 +123,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Packet TX Count",
+      "title": "TX Count",
       "type": "stat"
     },
     {
@@ -150,8 +150,8 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 5,
-        "x": 6,
+        "w": 4,
+        "x": 4,
         "y": 0
       },
       "id": 13,
@@ -239,8 +239,8 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 13,
-        "x": 11,
+        "w": 16,
+        "x": 8,
         "y": 0
       },
       "id": 15,
@@ -323,7 +323,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 7,
+        "w": 8,
         "x": 0,
         "y": 7
       },
@@ -407,8 +407,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 9,
-        "x": 7,
+        "w": 8,
+        "x": 8,
         "y": 7
       },
       "id": 2,
@@ -597,7 +597,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 7,
+        "w": 8,
         "x": 0,
         "y": 15
       },
@@ -712,8 +712,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 9,
-        "x": 7,
+        "w": 8,
+        "x": 8,
         "y": 15
       },
       "id": 11,
@@ -753,7 +753,7 @@
     "list": []
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {
