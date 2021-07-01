@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 3,
+  "id": 8,
   "links": [],
   "panels": [
     {
@@ -258,7 +258,7 @@
         {
           "exemplar": true,
           "expr": "tnc_max_range_recent / 1000",
-          "interval": "",
+          "interval": "30s",
           "legendFormat": "{{path}}",
           "refId": "A"
         }
@@ -771,6 +771,6 @@
   },
   "timezone": "",
   "title": "TNC Exporter",
-  "uid": "dsGvT6gnz",
+  "uid": "LqsZiBkgz",
   "version": 2
 }
