@@ -20,6 +20,7 @@ class TestPacketParsing:
     """
 
     # TODO: add unit tests for parse_packet_kiss method
+    # TODO: refactor parsing tests after PacketInfo refactor
 
     def test_parse_1(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00KB6CYS\x00\x00\x00\x00BEACON\x00\x00\x00\x00_' \

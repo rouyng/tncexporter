@@ -20,7 +20,7 @@ from aioprometheus import Service
 
 logger = logging.getLogger(__name__)
 
-
+# TODO: refactor PacketInfo into an object in separate module
 class PacketInfo(TypedDict):
     """Typed dictionary for defining AX.25 packet metadata"""
     frame_type: str  # type of frame (U, I, S, T, other)
@@ -33,6 +33,7 @@ class PacketInfo(TypedDict):
     hops_path: list  # list of hop callsigns
 
 
+# TODO: refactor into private method of PacketInfo object
 def parse_coordinates(data_field: str) -> Tuple[float, float]:
     """
     Parses latitude and longitude coordinates stored as plaintext in the information field of an
@@ -137,6 +138,7 @@ class TNCExporter:
         await self.server.stop()  # stop prometheus server
         self.listener.disconnect()  # disconnect listener from TNC
 
+    # TODO: refactor into public method of PacketInfo object
     @staticmethod
     def haversine_distance(
             pos1: tuple,
@@ -168,6 +170,7 @@ class TNCExporter:
         distance = 2 * radius * asin(sqrt(hav))
         return distance
 
+    # TODO: refactor into private method of PacketInfo object
     @staticmethod
     def parse_packet_agw(raw_packet: bytes) -> PacketInfo:
         """Parse AGW-format packet bytes, create a PacketInfo object
@@ -245,6 +248,7 @@ class TNCExporter:
         logging.debug(f"Decoded packet: {decoded_info}")
         return decoded_info
 
+    # TODO: refactor into private method of PacketInfo object
     @staticmethod
     def parse_packet_kiss(raw_packet: bytes) -> PacketInfo:
         """Parse KISS-format packet bytes, create a PacketInfo object
