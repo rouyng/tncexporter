@@ -8,10 +8,24 @@ class TestPacketParsing:
     raw AGWPE monitor packets are decoded as expected.
     """
 
-    # TODO: add unit tests for parse_packet_kiss method
+    # TODO: add unit tests for parse_agw_packet_kiss method
     # TODO: refactor parsing tests after PacketInfo refactor
 
-    def test_parse_1(self):
+    def test_parse_agw_empty(self):
+        """Make sure a completely empty agw packet is parsed without raising errors"""
+        raw_packet = b''
+        test_result = tncexporter.parser.PacketInfo(raw_packet, kiss=False)
+        assert test_result.frame_type == 'Unknown'
+        assert test_result.call_from == ''
+        assert test_result.call_to == ''
+        assert test_result.timestamp.hour == 0
+        assert test_result.timestamp.minute == 0
+        assert test_result.timestamp.second == 0
+        assert test_result.hops_count == 0
+        assert test_result.hops_path == []
+        assert test_result.lat_lon == (None, None)
+
+    def test_parse_agw_1(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00KB6CYS\x00\x00\x00\x00BEACON\x00\x00\x00\x00_' \
                      b'\x00\x00\x00\x00\x00\x00\x00 1:Fm KB6CYS To BEACON Via N6EX-4 <UI pid=F0 ' \
                      b'Len=24 PF=0 >[14:32:33]\rWEATHER STATION ON-LINE\r\r\x00 '
@@ -26,7 +40,7 @@ class TestPacketParsing:
         assert test_result.hops_path == ['N6EX-4']
         assert test_result.lat_lon == (None, None)
 
-    def test_parse_2(self):
+    def test_parse_agw_2(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00KF6WJS-14\x00S4PWYR\x00\x00\x00\x00X\x00\x00' \
                      b'\x00\x00\x00\x00\x00 1:Fm KF6WJS-14 To S4PWYR Via WIDE2-2 <UI pid=F0 ' \
                      b'Len=13 PF=0 >[14:32:38]\r`.a"l!^k/"6b}\r\x00 '
@@ -41,7 +55,7 @@ class TestPacketParsing:
         assert test_result.hops_path == []
         assert test_result.lat_lon == (None, None)
 
-    def test_parse_3(self):
+    def test_parse_agw_3(self):
         raw_packet = b'\x00\x00\x00\x00T\x00\x00\x00W6SCE-10\x00\x00APN382\x00\x00\x00\x00\x97' \
                      b'\x00\x00\x00\x00\x00\x00\x00 1:Fm W6SCE-10 To APN382 Via WIDE2-1 <UI ' \
                      b'pid=F0 Len=77 PF=0 >[14:33:38]\r!3419.82N111836.06W#PHG6860/W1 on Oat ' \
@@ -57,7 +71,7 @@ class TestPacketParsing:
         assert test_result.hops_path == []
         assert test_result.lat_lon == (34.1982, -118.3606)
 
-    def test_parse_4(self):
+    def test_parse_agw_4(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00AG7LY-7\x00\x00\x00TQQYRR\x00\x00\x00\x00f' \
                      b'\x00\x00\x00\x00\x00\x00\x00 1:Fm AG7LY-7 To TQQYRR Via SHEPRD,WIDE1,' \
                      b'WIDE2-1 <UI pid=F0 Len=17 F=0 >[17:54:31]\r`(Y[rIY[/`"BL}_(\r\r\x00'
@@ -72,7 +86,7 @@ class TestPacketParsing:
         assert test_result.hops_path == ['SHEPRD']
         assert test_result.lat_lon == (None, None)
 
-    def test_parse_5(self):
+    def test_parse_agw_5(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00KC7ZNH-2\x00\x00T0SVTS\x00\x00\x00\x00z\x00' \
                      b'\x00\x00\x00\x00\x00\x00 1:Fm KC7ZNH-2 To T0SVTS Via SHEPRD,WIDE1,' \
                      b'WIDE2-1 <UI pid=F0 Len=35 PF=0 >[17:58:50]\r`\'U=l F>/\'"Bg}MT-RTG|*[' \
@@ -88,7 +102,7 @@ class TestPacketParsing:
         assert test_result.hops_path == ['SHEPRD']
         assert test_result.lat_lon == (None, None)
 
-    def test_parse_6(self):
+    def test_parse_agw_6(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00KJ7BC-9\x00\x00\x00APTT4\x00\x00\x00\x00\x00' \
                      b'\x96\x00\x00\x00\x00\x00\x00\x00 1:Fm KJ7BC-9 To APTT4 Via SHEPRD,WIDE1,' \
                      b'WIDE2-2 <UI pid=F0 Len=65 PF=0 >[' \
@@ -105,7 +119,7 @@ class TestPacketParsing:
         assert test_result.hops_path == ['SHEPRD']
         assert test_result.lat_lon == (40.3797, -111.5906)
 
-    def test_parse_7(self):
+    def test_parse_agw_7(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00BLOW\x00\x00\x00\x00\x00\x00APDW14\x00\x00' \
                      b'\x00\x00\x7f\x00\x00\x00\x00\x00\x00\x00 1:Fm BLOW To APDW14 Via RCHFLD,' \
                      b'SHEPRD,WIDE2 <UI pid=F0 Len=45 PF=0 >[' \
@@ -121,7 +135,7 @@ class TestPacketParsing:
         assert test_result.hops_path == ['RCHFLD', 'SHEPRD']
         assert test_result.lat_lon == (37.3551, -112.5196)
 
-    def test_parse_8(self):
+    def test_parse_agw_8(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00DO0HWI\x00\x00\x00\x00APMI04\x00\x00\x00\x00' \
                      b'\x8b\x00\x00\x00\x00\x00\x00\x00 1:Fm DO0HWI To APMI04 Via DB0KUE <UI ' \
                      b'pid=F0 Len=68 PF=0 >[16:27:50]\r@192327z5354.08N/01124.80E#APRS Digipeater ' \
@@ -137,7 +151,7 @@ class TestPacketParsing:
         assert test_result.hops_path == ['DB0KUE']
         assert test_result.lat_lon == (53.5408, 11.2480)
 
-    def test_parse_9(self):
+    def test_parse_agw_9(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00DB0HRO\x00\x00\x00\x00APZ18\x00\x00\x00\x00' \
                      b'\x00\x89\x00\x00\x00\x00\x00\x00\x00 1:Fm DB0HRO To APZ18 Via WIDE2 <UI ' \
                      b'pid=F0 Len=69 P=0 >[16:26:40]\rtxt ;DB0HRO/FM*272108z5408.37N/01202.82EmFM ' \
@@ -153,7 +167,7 @@ class TestPacketParsing:
         assert test_result.hops_path == []
         assert test_result.lat_lon == (54.0837, 12.0282)
 
-    def test_parse_10(self):
+    def test_parse_agw_10(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00PU2WZA-15\x00APN383\x00\x00\x00\x00q\x00\x00' \
                      b'\x00\x00\x00\x00\x00 1:Fm PU2WZA-15 To APN383 <UI pid=F0 Len=50 PF=0 >[' \
                      b'17:05:23]\r!2254.81S/04826.34W# Aprs - Botucatu SP bY PU2PHF\r\r\x00'
@@ -168,7 +182,7 @@ class TestPacketParsing:
         assert test_result.hops_path == []
         assert test_result.lat_lon == (-22.5481, -48.2634)
 
-    def test_parse_11(self):
+    def test_parse_agw_11(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00PY2KCA-15\x00APMI01\x00\x00\x00\x00~\x00\x00' \
                      b'\x00\x00\x00\x00\x00 1:Fm PY2KCA-15 To APMI01 Via PU2LYJ-15 <UI pid=F0 ' \
                      b'Len=49 PF=0 >[17:00:52]\r@200000z2234.97S/04710.61W#GRUPO PAULISTA DE ' \
@@ -184,7 +198,7 @@ class TestPacketParsing:
         assert test_result.hops_path == ['PU2LYJ-15']
         assert test_result.lat_lon == (-22.3497, -47.1061)
 
-    def test_parse_12(self):
+    def test_parse_agw_12(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00BX2ADJ-2\x00\x00APAVT7\x00\x00\x00\x00^\x00' \
                      b'\x00\x00\x00\x00\x00\x00 1:Fm BX2ADJ-2 To APAVT7 Via WIDE1-1 <UI pid=F0 ' \
                      b'Len=20 PF=0 >[17:27:43]\r!2500.63N/12128.06Er\r\x00 '
@@ -199,7 +213,7 @@ class TestPacketParsing:
         assert test_result.hops_path == []
         assert test_result.lat_lon == (25.0063, 121.2806)
 
-    def test_parse_13(self):
+    def test_parse_agw_13(self):
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00BM2MCF-12\x00APAVTT\x00\x00\x00\x00\x8a\x00' \
                      b'\x00\x00\x00\x00\x00\x00 1:Fm BM2MCF-12 To APAVTT Via BX2ADJ-2,WIDE1,' \
                      b'WIDE2-1 <UI pid=F0 Len=48 PF=0 >[17:44:31]\r!2459.75N/12123.05ErPHG2760 ' \
@@ -215,7 +229,7 @@ class TestPacketParsing:
         assert test_result.hops_path == ['BX2ADJ-2']
         assert test_result.lat_lon == (24.5975, 121.2305)
 
-    def test_parse_14(self):
+    def test_parse_agw_14(self):
         """This test checks parsing of uncommon comma separated lat/lon values"""
         raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00BM2MCF-12\x00APAVTT\x00\x00\x00\x00\x8a\x00' \
                      b'\x00\x00\x00\x00\x00\x00 1:Fm BM2MCF-12 To APAVTT Via BX2ADJ-2,WIDE1,' \
@@ -232,6 +246,20 @@ class TestPacketParsing:
         assert test_result.hops_count == 1
         assert test_result.hops_path == ['BX2ADJ-2']
         assert test_result.lat_lon == (48.4783, 8.2982)
+
+    def test_parse_kiss_empty(self):
+        """Make sure a completely empty kiss packet is parsed without raising errors"""
+        raw_packet = b''
+        test_result = tncexporter.parser.PacketInfo(raw_packet, kiss=True)
+        assert test_result.frame_type == 'Unknown'
+        assert test_result.call_from == ''
+        assert test_result.call_to == ''
+        assert test_result.timestamp.hour == 0
+        assert test_result.timestamp.minute == 0
+        assert test_result.timestamp.second == 0
+        assert test_result.hops_count == 0
+        assert test_result.hops_path == []
+        assert test_result.lat_lon == (None, None)
 
 
 # TODO: refactor haversine distance tests to work with new PacketInfo interface
