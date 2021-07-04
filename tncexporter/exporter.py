@@ -4,73 +4,18 @@ This module provides the exporter functionality.
 process_packets is called from the main application loop
 
 """
-import sys
 
 from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, \
     RF_PACKET_DISTANCE, MAX_DISTANCE_RECENT, PACKET_RX_RECENT, PACKET_TX_RECENT
-from math import asin, cos, sin, sqrt, radians
-from typing import TypedDict, List, Tuple
 import asyncio
 import datetime
 import logging
-import re
 from .listener import Listener
 from asyncio.events import AbstractEventLoop
 from aioprometheus import Service
+from .parser import PacketInfo
 
 logger = logging.getLogger(__name__)
-
-# TODO: refactor PacketInfo into an object in separate module
-class PacketInfo(TypedDict):
-    """Typed dictionary for defining AX.25 packet metadata"""
-    frame_type: str  # type of frame (U, I, S, T, other)
-    data_len: int  # length of data in packet (inclusive of 36 byte header)
-    call_from: str  # originating callsign
-    call_to: str  # destination callsign
-    timestamp: datetime.time  # timestamp of when packet was received by TNC
-    lat_lon: tuple  # tuple containing two floats representing latitude and longitude
-    hops_count: int  # number of hops. Non-digipeated packets should have 0
-    hops_path: list  # list of hop callsigns
-
-
-# TODO: refactor into private method of PacketInfo object
-def parse_coordinates(data_field: str) -> Tuple[float, float]:
-    """
-    Parses latitude and longitude coordinates stored as plaintext in the information field of an
-    APRS packet. Does not parse compressed format or Mic-E format position reports
-    :param data_field: Data/information field of APRS packet
-    :return: A tuple containing float values for latitude and longitude, or a Tuple containing None,
-    None if the coordinates cannot be parsed from the data field
-    """
-    latitude = None
-    longitude = None
-    try:
-        # parse latitude and longitude from position packets
-        latlon_regex = r"([0-9][0-9][0-9][0-9]\.[0-9][0-9])(?:[0-9]|,){0,5}(N|S).{0,2}" \
-                       r"([0-1][0-9][0-9][0-9][0-9]\.[0-9][0-9])(?:[0-9]|,){0,5}(E|W)"
-        latlon_match = re.search(latlon_regex, data_field)
-        if latlon_match is not None:
-            logging.debug(f"latlon regex results: {latlon_match.groups()}")
-            raw_lat = latlon_match[1]
-            lat_direction = latlon_match[2]
-            raw_lon = latlon_match[3]
-            lon_direction = latlon_match[4]
-            if lat_direction == 'N':
-                latitude = round(float(raw_lat) / 100, 4)
-            elif lat_direction == 'S':
-                latitude = round(-float(raw_lat) / 100, 4)
-            else:
-                latitude = None
-            if lon_direction == 'E':
-                longitude = round(float(raw_lon) / 100, 4)
-            elif lon_direction == 'W':
-                longitude = round(-float(raw_lon) / 100, 4)
-            else:
-                longitude = None
-        # TODO: decode position reports from Mic-E and APRS compressed formats
-    except (IndexError, ValueError):
-        pass
-    return latitude, longitude
 
 
 class TNCExporter:
@@ -138,182 +83,6 @@ class TNCExporter:
         await self.server.stop()  # stop prometheus server
         self.listener.disconnect()  # disconnect listener from TNC
 
-    # TODO: refactor into public method of PacketInfo object
-    @staticmethod
-    def haversine_distance(
-            pos1: tuple,
-            pos2: tuple,
-            radius: float = 6371.0e3
-    ) -> float:
-        """
-        Calculate the distance between two points on a sphere (e.g. Earth).
-        If no radius is provided then the default Earth radius, in meters, is
-        used.
-        The haversine formula provides great-circle distances between two points
-        on a sphere from their latitudes and longitudes using the law of
-        haversines, relating the sides and angles of spherical triangles.
-        Based on the haversine_distance function used here:
-        https://github.com/claws/dump1090-exporter/blob/master/src/dump1090exporter/exporter.py
-        `Reference <https://en.wikipedia.org/wiki/Haversine_formula>`_
-        :param pos1: a tuple defining (lat, lon) in decimal degrees
-        :param pos2: a tuple defining (lat, lon) in decimal degrees
-        :param radius: radius of sphere in meters.
-        :returns: distance between two points in meters.
-        :rtype: float
-        """
-        lat1, lon1, lat2, lon2 = [radians(x) for x in (*pos1, *pos2)]
-
-        hav = (
-                sin((lat2 - lat1) / 2.0) ** 2
-                + cos(lat1) * cos(lat2) * sin((lon2 - lon1) / 2.0) ** 2
-        )
-        distance = 2 * radius * asin(sqrt(hav))
-        return distance
-
-    # TODO: refactor into private method of PacketInfo object
-    @staticmethod
-    def parse_packet_agw(raw_packet: bytes) -> PacketInfo:
-        """Parse AGW-format packet bytes, create a PacketInfo object
-        :param raw_packet: packet bytes
-        :returns: Typed dictionary containing metadata
-        :rtype: PacketInfo"""
-
-        len_data = int.from_bytes(raw_packet[28:32], signed=False, byteorder="little")
-        frame_type = chr(raw_packet[4]).upper()
-        try:
-            call_from = raw_packet[8:18].strip(b'\x00').decode("ascii")
-        except UnicodeDecodeError:
-            call_from = None
-            logging.debug(f"Unicode error when decoding: {raw_packet[8:18]}")
-        try:
-            call_to = raw_packet[18:28].strip(b'\x00').decode("ascii")
-        except UnicodeDecodeError:
-            call_to = None
-            logging.debug(f"Unicode error when decoding: {raw_packet[18:28]}")
-        timestamp = None
-        coordinates = (None, None)
-        hops = []
-        try:
-            data_string = raw_packet[36:].strip(b'\x00').decode("ascii")
-            logging.debug("Parsing data from the following string:")
-            logging.debug(data_string)
-            # parse timestamp
-            time_match = re.search("[0-2][0-9]:[0-5][0-9]:[0-5][0-9]", data_string)
-            if time_match is not None:
-                try:
-                    raw_hour = time_match.group()[0:2]
-                    raw_min = time_match.group()[3:5]
-                    raw_sec = time_match.group()[6:8]
-                    timestamp = datetime.time(hour=int(raw_hour),
-                                              minute=int(raw_min),
-                                              second=int(raw_sec))
-                except TypeError:
-                    pass
-            try:
-                # Parse list of hops
-                # This won't parse the hops list in headers that UI-View creates, and possibly
-                # some other non-standard header formats as well.
-                hops_string = re.findall("(?:Via )(.*?)(?: <)", data_string)[0]
-                # tuple of non-WIDE path types that don't represent hops through a digipeater
-                path_types = ('RELAY',
-                              'ECHO',
-                              'TRACE',
-                              'GATE',
-                              'BEACON',
-                              'ARISS',
-                              'RFONLY',
-                              'NOGATE')
-                # regex matching all WIDE paths like WIDE1, WIDE 1-1, WIDE2-2 etc
-                wide_regex = "^WIDE(\b|([0-9]-[0-9])|[0-9])"
-                # determine if the packet was digipeated by making a list of hops that dont
-                # match known "path" hop types
-                hops = [h for h in hops_string.split(',') if h not in path_types
-                        and re.fullmatch(wide_regex, h) is None]
-            except IndexError:
-                pass
-            coordinates = parse_coordinates(data_string)
-        except UnicodeDecodeError:
-            logging.error("Error decoding bytes into unicode")
-
-        decoded_info = PacketInfo(
-            frame_type=frame_type,
-            data_len=len_data,
-            call_from=call_from,
-            call_to=call_to,
-            timestamp=timestamp,
-            hops_count=len(hops),
-            hops_path=hops,
-            lat_lon=coordinates
-        )
-        logging.debug(f"Decoded packet: {decoded_info}")
-        return decoded_info
-
-    # TODO: refactor into private method of PacketInfo object
-    @staticmethod
-    def parse_packet_kiss(raw_packet: bytes) -> PacketInfo:
-        """Parse KISS-format packet bytes, create a PacketInfo object
-        :param raw_packet: packet bytes
-        :returns: Typed dictionary containing metadata
-        :rtype: PacketInfo"""
-
-        # TODO: finish KISS parsing
-
-        len_data = None
-        frame_type = 'Unknown'
-        coordinates = (None, None)
-        hops = []
-
-        if hex(raw_packet[0]) != "0x0":
-            raise ValueError('Not a data frame?')
-
-        call_to = ''.join([chr(b >> 1) for b in raw_packet[1:7]]).strip()
-        call_from = ''.join([chr(b >> 1) for b in raw_packet[8:14]]).strip()
-
-        try:
-            split_packet = raw_packet[15:].split(b'\x03\xf0')
-            path_bytes, data_bytes = split_packet[0], split_packet[1]
-        except IndexError:
-            # If the packet cannot be split by b'\x03\xf0' and raises an IndexError,
-            # it is not a UI frame and therefore not an APRS packet
-            pass
-        else:
-            frame_type = 'U'
-            path_string = ''.join([chr(b >> 1) for b in path_bytes])
-            path_types = ('RELAY',
-                          'ECHO',
-                          'TRACE',
-                          'GATE',
-                          'BEACON',
-                          'ARISS',
-                          'RFONLY',
-                          'NOGATE')
-            # regex matching all WIDE paths like WIDE1, WIDE 1 1, WIDE2-2 etc
-            wide_regex = "^WIDE(\b|([0-9] [0-9])|[0-9])"
-            # Parse hops list
-            # This won't parse the hops list in headers that UI-View creates, and possibly
-            # some other non-standard header formats as well
-            hops = [h.strip() for h in re.split('[pqswz]', path_string)
-                    if len(h.strip()) > 0
-                    and h.strip() not in path_types
-                    and re.fullmatch(wide_regex, h.strip()) is None]
-            try:
-                coordinates = parse_coordinates(data_bytes.decode("ascii"))
-            except UnicodeDecodeError:
-                logging.exception("Could not decode data field of packet into ascii: ")
-            len_data = len(data_bytes)
-
-        decoded_info = PacketInfo(
-            frame_type=frame_type,
-            data_len=len_data,
-            call_from=call_from,
-            call_to=call_to,
-            timestamp=None,
-            hops_count=len(hops),
-            hops_path=hops,
-            lat_lon=coordinates
-        )
-        logging.debug(f"Decoded packet: {decoded_info}")
-        return decoded_info
 
     async def metric_updater(self):
         """Asynchronous coroutine function that reads the queue of received packets and calls
@@ -375,7 +144,7 @@ class TNCExporter:
                     # No hops means the packet was received via RF, so update RF_PACKET_DISTANCE
                     RF_PACKET_DISTANCE.observe({'type': 'unknown'}, distance_from_tnc)
 
-    def summary_metrics(self, packets: List[PacketInfo]):
+    def summary_metrics(self, packets: list[PacketInfo]):
         """
         Function that processes multiple PacketInfo object
          and updates Prometheus metrics based on aggregate measurements across the update interval.
