@@ -9,18 +9,19 @@ from math import asin, cos, sin, sqrt, radians
 
 class PacketInfo:
     """Object for parsing and storing AX.25 packet metadata"""
+
     def __init__(self, packet_bytes: bytes, kiss: bool = False):
-        self.frame_type: str = ""    # type of frame (U, I, S, T, other)
-        self.data_len: int = 0       # length of data in packet (inclusive of 36 byte header)
-        self.call_from: str = ""     # originating callsign
-        self.call_to: str = ""       # destination callsign
+        self.frame_type: str = ""  # type of frame (U, I, S, T, other)
+        self.data_len: int = 0  # length of data in packet (inclusive of 36 byte header)
+        self.call_from: str = ""  # originating callsign
+        self.call_to: str = ""  # destination callsign
         # timestamp of when packet was received by TNC
         self.timestamp: datetime.time = datetime.time(hour=0,
                                                       minute=0,
                                                       second=0)
         # tuple containing two floats representing latitude and longitude
         self.lat_lon: tuple = (None, None)
-        self.hops_count: int = 0        # number of hops. Non-digipeated packets should have 0
+        self.hops_count: int = 0  # number of hops. Non-digipeated packets should have 0
         self.hops_path: list[str] = []  # list of hop callsigns
         if kiss:
             self._parse_packet_kiss(packet_bytes)
@@ -78,7 +79,6 @@ class PacketInfo:
         Based on the haversine_distance function used here:
         https://github.com/claws/dump1090-exporter/blob/master/src/dump1090exporter/exporter.py
         `Reference <https://en.wikipedia.org/wiki/Haversine_formula>`_
-        :param pos1: a tuple defining (lat, lon) in decimal degrees
         :param tnc_pos: a tuple defining (lat, lon) in decimal degrees
         :param radius: radius of sphere in meters.
         :returns: distance between two points in meters.
@@ -120,8 +120,8 @@ class PacketInfo:
                     raw_min = time_match.group()[3:5]
                     raw_sec = time_match.group()[6:8]
                     self.timestamp = datetime.time(hour=int(raw_hour),
-                                              minute=int(raw_min),
-                                              second=int(raw_sec))
+                                                   minute=int(raw_min),
+                                                   second=int(raw_sec))
                 except TypeError:
                     pass
             try:
@@ -143,8 +143,8 @@ class PacketInfo:
                 # determine if the packet was digipeated by making a list of hops that dont
                 # match known "path" hop types
                 self.hops_path = [h for h in hops_string.split(',') if h not in path_types
-                        and re.fullmatch(wide_regex, h) is None]
-                self.hops_count =
+                                  and re.fullmatch(wide_regex, h) is None]
+                self.hops_count = len(self.hops_path)
             except IndexError:
                 pass
             self._parse_coordinates(data_string)
@@ -186,9 +186,9 @@ class PacketInfo:
             # This won't parse the hops list in headers that UI-View creates, and possibly
             # some other non-standard header formats as well
             self.hops_path = [h.strip() for h in re.split('[pqswz]', path_string)
-                    if len(h.strip()) > 0
-                    and h.strip() not in path_types
-                    and re.fullmatch(wide_regex, h.strip()) is None]
+                              if len(h.strip()) > 0
+                              and h.strip() not in path_types
+                              and re.fullmatch(wide_regex, h.strip()) is None]
             self.hops_count = len(self.hops_path)
             try:
                 self._parse_coordinates(data_bytes.decode("ascii"))
