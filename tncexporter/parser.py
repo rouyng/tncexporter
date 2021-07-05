@@ -11,6 +11,8 @@ class PacketInfo:
     """Object for parsing and storing AX.25 packet metadata"""
 
     def __init__(self, packet_bytes: bytes, kiss: bool = False):
+        self.raw_bytes: bytes = packet_bytes
+        logging.debug(f"Parsing packet bytes: {repr(self.raw_bytes)}")
         self.frame_type: str = "Unknown"  # type of frame (U, I, S, T, other)
         self.data_len: int = 0  # length of data in packet (inclusive of 36 byte header)
         self.call_from: str = ""  # originating callsign
@@ -110,8 +112,7 @@ class PacketInfo:
                 logging.debug(f"Unicode error when decoding: {raw_packet[18:28]}")
             try:
                 data_string = raw_packet[36:].strip(b'\x00').decode("ascii")
-                logging.debug("Parsing data from the following string:")
-                logging.debug(data_string)
+                logging.debug(f"Parsing data from the following string: {repr(data_string)}")
                 # parse timestamp
                 time_match = re.search("[0-2][0-9]:[0-5][0-9]:[0-5][0-9]", data_string)
                 if time_match is not None:
@@ -192,6 +193,7 @@ class PacketInfo:
                                   and re.fullmatch(wide_regex, h.strip()) is None]
                 self.hops_count = len(self.hops_path)
                 try:
+                    logging.debug(f"Parsing position from data bytes: {repr(data_bytes)}")
                     self._parse_coordinates(data_bytes.decode("ascii"))
                 except UnicodeDecodeError:
                     logging.exception("Could not decode data field of packet into ascii: ")
