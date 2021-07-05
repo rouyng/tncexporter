@@ -5,7 +5,7 @@ process_packets is called from the main application loop
 
 """
 
-from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, \
+from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, RX_PACKET_SIZE, \
     RF_PACKET_DISTANCE, MAX_DISTANCE_RECENT, PACKET_RX_RECENT, PACKET_TX_RECENT
 import asyncio
 import datetime
@@ -41,6 +41,7 @@ class TNCExporter:
         self.server = Service()
         self.register_metrics((PACKET_RX,
                                PACKET_TX,
+                               RX_PACKET_SIZE,
                                PACKET_DISTANCE,
                                RF_PACKET_DISTANCE,
                                MAX_DISTANCE_RECENT,
@@ -127,11 +128,13 @@ class TNCExporter:
         :param packet_info: a PacketInfo object containing packet metadata
         """
         path_type = "Digipeated" if packet_info.hops_count > 0 else "Simplex"
+
         if packet_info.frame_type == 'T':
             # if a packet is transmitted, increment PACKET_TX
             # TODO: more informative labels
             PACKET_TX.inc({'path': path_type})
         else:
+            RX_PACKET_SIZE.observe({}, packet_info.len_data)
             # if a packet is received and decoded, increment PACKET_RX metric
             PACKET_RX.inc({'ax25_frame_type': packet_info.frame_type,
                            'path': path_type,

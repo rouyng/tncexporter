@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 8,
+  "id": 9,
   "links": [],
   "panels": [
     {
@@ -182,7 +182,7 @@
           "refId": "A"
         }
       ],
-      "title": "Top 5 Active Callsigns",
+      "title": "Top 5 active callsigns",
       "type": "stat"
     },
     {
@@ -347,7 +347,7 @@
           "refId": "A"
         }
       ],
-      "title": "# Packets RX",
+      "title": "# Packets RX over last 30s",
       "type": "timeseries"
     },
     {
@@ -436,7 +436,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Packets RX/minute by APRS Path Type",
+      "title": "Packets RX/minute by APRS path type",
       "type": "timeseries"
     },
     {
@@ -535,13 +535,13 @@
           "format": "time_series",
           "instant": false,
           "interval": "1m",
-          "legendFormat": "{{path}}",
+          "legendFormat": "ceil({{path}})",
           "refId": "A"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Packets RX/minute by AX.25 Frame Type",
+      "title": "Packets RX/minute by AX.25 frame type",
       "type": "timeseries"
     },
     {
@@ -621,7 +621,7 @@
           "refId": "A"
         }
       ],
-      "title": "# Packets TX",
+      "title": "# Packets TX over last 30s",
       "type": "timeseries"
     },
     {
@@ -743,6 +743,68 @@
       "timeShift": null,
       "title": "Packets TX/minute by APRS Path Type",
       "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 15
+      },
+      "id": 21,
+      "interval": "30s",
+      "options": {
+        "displayMode": "lcd",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "text": {}
+      },
+      "pluginVersion": "8.0.3",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "ceil(increase(tnc_rx_packet_size_bucket[$__range]))",
+          "format": "heatmap",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "{{le}}",
+          "refId": "A"
+        }
+      ],
+      "title": "# packets RX by size (≥ bytes)",
+      "type": "bargauge"
     }
   ],
   "refresh": "30s",
@@ -753,7 +815,7 @@
     "list": []
   },
   "time": {
-    "from": "now-15m",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {
@@ -771,6 +833,6 @@
   },
   "timezone": "",
   "title": "TNC Exporter",
-  "uid": "LqsZiBkgz",
-  "version": 2
+  "uid": "CZQvi6zRk",
+  "version": 1
 }

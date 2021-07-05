@@ -4,7 +4,7 @@ This module defines the prometheus metrics to be exported.
 All metrics ending with RECENT record a total over the time span set in the "summary_interval"
 parameter of tncexporter.
 """
-from aioprometheus import Counter, Gauge, Summary
+from aioprometheus import Counter, Gauge, Summary, Histogram
 
 # Metrics tracking counts of frames received/decoded or transmitted
 # PACKET_RX labels:
@@ -16,6 +16,9 @@ PACKET_RX = Counter("tnc_packet_rx",
 PACKET_TX = Counter("tnc_packet_tx",
                     "Number of packets transmitted")
 
+RX_PACKET_SIZE = Histogram("tnc_rx_packet_size",
+                        "Length in bytes of data field in packet",
+                           buckets=[0, 50, 100, 150, 200, 250, 300, 350])
 
 # Summary metrics tracking distances of received frames. Only calculated for frames that report
 # position data (APRS). Not currently used in dashboard
@@ -25,7 +28,7 @@ PACKET_DISTANCE = Summary("tnc_packet_distance",
 RF_PACKET_DISTANCE = Summary("tnc_rf_packet_distance",
                              "Distance in meters of received position packets from TNC (RF only)")
 
-# Summary metrics, calculated from all packets collected across the interval
+# Aggregate metrics, calculated from all packets collected across the interval
 # defined by update_interval
 MAX_DISTANCE_RECENT = Gauge("tnc_max_range_recent",
                             "Maximum range in meters of position frames received over last time "
