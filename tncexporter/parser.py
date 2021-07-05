@@ -107,7 +107,7 @@ class PacketInfo:
             self.call_to = raw_packet[18:28].strip(b'\x00').decode("ascii", errors="replace")
             data_bytes = raw_packet[36:].strip(b'\x00')
             data_string = data_bytes.decode("ascii", errors="replace")
-            logging.debug(f"Parsing data from the following string: {repr(data_string)}")
+            logging.debug(f"Parsing data field: {repr(data_string)}")
             # parse timestamp
             time_match = re.search("[0-2][0-9]:[0-5][0-9]:[0-5][0-9]", data_string)
             if time_match is not None:
@@ -185,8 +185,9 @@ class PacketInfo:
                                   and h.strip() not in path_types
                                   and re.fullmatch(wide_regex, h.strip()) is None]
                 self.hops_count = len(self.hops_path)
-                logging.debug(f"Parsing position from data bytes: {repr(data_bytes)}")
-                self._parse_coordinates(data_bytes.decode("ascii", errors="replace"))
+                data_string = data_bytes.decode("ascii", errors="replace")
+                logging.debug(f"Parsing data field: {repr(data_string)}")
+                self._parse_coordinates(data_string)
                 self.len_data = len(data_bytes)
         except IndexError:
             logging.error("Packet less than expected length")
