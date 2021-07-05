@@ -93,6 +93,7 @@ class PacketInfo:
                 + cos(lat1) * cos(lat2) * sin((lon2 - lon1) / 2.0) ** 2
         )
         distance = 2 * radius * asin(sqrt(hav))
+        logging.debug(f"Calculated distance between {self.lat_lon} and {tnc_pos} = {distance:.4f}")
         return distance
 
     def _parse_packet_agw(self, raw_packet: bytes):
