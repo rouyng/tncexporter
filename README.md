@@ -42,12 +42,15 @@ TNC exporter provides the following metrics. See prometheus docs for a [discussi
 - RF_PACKET_DISTANCE: Summary, Distance in meters of received position packets from TNC (RF only).
 
 ## Installation guide
-In order to visualize TNC metrics using this exporter, there are four steps:
+Here is an overview of the steps needed to run TNC exporter, assuming you don't have pre-existing Prometheus and Grafana installations. 
 1. Install prometheus. 
-2. Install the exporter and configure your prometheus instance to pull metrics from it.  
-3. Install grafana. 
-4. Install the TNC exporter dashboard in grafana and configure it to use your prometheus server as a data source.
-5. Run direwolf, making sure it is configured to expose an 
+2. Install grafana. 
+3. Install the TNC exporter dashboard in grafana and configure it to use your prometheus server as a data source.
+4. Install TNC exporter and configure your prometheus instance to scrape metrics from the address/port of the exporter.
+5. Run direwolf, making sure it is configured to provide a port for an AGW or KISS client
+6. Run TNC exporter. To confirm it is connected to your TNC and processing packets, check the exporter's log output on the command line and metrics endpoint.
+
+For detailed instructions, see the subheadings below.
 
 ### System requirements
 TNC exporter requires Python 3.9. You can download Python for all major operating systems [here](https://www.python.org/downloads/).
@@ -55,18 +58,6 @@ TNC exporter requires Python 3.9. You can download Python for all major operatin
 Please consult the [Prometheus](https://prometheus.io/docs/prometheus/latest/getting_started/) and [Grafana documentation](https://grafana.com/docs/grafana/latest/installation/requirements/) for system requirements of those applications.
 
 The total requirements for all these programs are fairly minimal, and all should happily run on a Raspberry Pi alongside Direwolf. 
-
-### Installing TNC exporter
-
-Download TNC exporter by using the green "Code" download button at the top of this repo page. Alternatively, clone the repository with:
-
-`git clone https://github.com/rouyng/tncexporter.git`
-
-Once you have downloaded a local copy of TNC exporter, open a terminal in the tncexporter directory you just created. At this point I highly recommend creating a python virtual environment before installing dependencies ([see instructions here for using Pipenv or the builtin virtualenv tool](https://docs.python-guide.org/dev/virtualenvs/)). Once you have set up a virtual environment (or not) install the additional required dependencies by running:
-
-`pip install -r requirements.txt`
-
-Now you should be ready to [run TNC exporter](#running-and-configuring-tnc-exporter).
 
 ### Installing prometheus
 A full guide on how to install and configure prometheus is outside the scope of this readme. Please consult the [official Prometheus installation guide](https://prometheus.io/docs/prometheus/latest/installation/) or the many other online tutorials available.
@@ -84,16 +75,28 @@ scrape_configs:
 
 If you have multiple instances of TNC exporter running, you can change the job_name for each instance to something more descriptive.
 
-Once you have prometheus configured and TNC exporter is running, you can check the prometheus web interface to make sure it is scraping metrics from TNC exporter by visiting http://*prometheus-server-ip*:9090/targets
+Once you have prometheus configured and TNC exporter is running, you can check the prometheus web interface to make sure it is scraping metrics from TNC exporter by visiting http://localhost:9090/targets
 
-### Installing and configuring grafana
+### Installing grafana
 A full guide on how to install and configure grafana is outside the scope of this readme. Please consult the [official Grafana installation guide](https://grafana.com/docs/grafana/latest/installation/) or the many other online tutorials available.
 
 Once you have a working installation of grafana, [import](https://grafana.com/docs/grafana/latest/dashboards/export-import/) the TNC exporter dashboard from the [dashboard json file](grafana-dashboard/tncexporter.json) included in this repository. 
 
-If you are using non-default names for the prometheus data source or the TNC exporter scrape job, you may have to adjust each dashboard panel's data source/metrics query accordingly.
+If you are using non-default names for the prometheus data source, or for the TNC exporter scrape job, you may have to adjust each dashboard panel's data source/metrics query accordingly.
 
-## Running and Configuring TNC exporter
+### Installing TNC exporter
+
+Download TNC exporter by using the green "Code" download button at the top of this repo page. Alternatively, clone the repository with:
+
+`git clone https://github.com/rouyng/tncexporter.git`
+
+Once you have downloaded a local copy of TNC exporter, open a terminal in the tncexporter directory you just created. At this point I highly recommend creating a python virtual environment before installing dependencies ([see instructions here for using Pipenv or the builtin virtualenv tool](https://docs.python-guide.org/dev/virtualenvs/)). Once you have set up a virtual environment (or not) install the additional required dependencies by running:
+
+`pip install -r requirements.txt`
+
+Now you should be ready to [run TNC exporter](#running-and-configuring-tnc-exporter).
+
+## Running and configuring TNC exporter
 The basic command to run TNC exporter is:
 
 `python -m tncexporter`
@@ -109,11 +112,13 @@ By default, TNC exporter tries to connect to an AGW TCP/IP interface at the spec
 AGW mode is the recommended default because the AGW interface provides "monitoring" functionality that passes both transmitted and received packets to TNC exporter for metrics collection. The KISS interface will only pass received packets, so TNC exporter running in KISS mode will not collect metrics for transmitted packets. 
 
 ### Configuring distance metrics
-If you want distance metrics, add your TNC's latitude and longitude as follows (S latitudes and W longitudes are negative):
+If you want distance metrics, add your TNC's latitude and longitude in decimal degrees as follows:
 
 `python -m tncexporter --latitude 40.7484 --longitude -73.9855`
 
-Please note that TNC exporter does not parse APRS compressed format or Mic-E format position reports. Only those packets that provide latitude/longitude in plaintext update distance metrics. 
+The above example sets the TNC's position at 40.7484°N, 73.9855°W. South latitudes and west longitudes are entered as negative numbers. TNC exporter will now calculate distances of received position packets relative to this location. 
+
+Please note that TNC exporter does not parse APRS compressed format or Mic-E format position reports. Currently, only those packets that provide latitude/longitude in plaintext update distance metrics. Mic-E/compressed position report parsing is planned for a future release.
 
 ### Testing
 
