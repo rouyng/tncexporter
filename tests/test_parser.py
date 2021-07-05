@@ -267,13 +267,20 @@ class TestHaversine:
     """Test distance calculations performed by exporter.haversine_distance()"""
 
     def test_haversine_1(self):
-        point1 = (-2.74, -44.14)
-        point2 = (42.32, -113.04)
-        distance = tncexporter.parser.haversine_distance(point1, point2)
-        assert round(distance, 2) == 8504802.16
+        raw_packet = b'\x00\x00\x00\x00T\x00\x00\x00W6SCE-10\x00\x00APN382\x00\x00\x00\x00\x97' \
+                     b'\x00\x00\x00\x00\x00\x00\x00 1:Fm W6SCE-10 To APN382 Via WIDE2-1 <UI ' \
+                     b'pid=F0 Len=77 PF=0 >[14:33:38]\r!3419.82N111836.06W#PHG6860/W1 on Oat ' \
+                     b'Mtn./A=003747/k6ccc@amsat.org for info\r\r\x00 '
+        parsed = tncexporter.parser.PacketInfo(raw_packet, kiss=False)
+        assert parsed.lat_lon == (34.1982, -118.3606)
+        assert round(parsed.haversine_distance(tnc_pos=(33, -118)), 2) == 137355.59
 
     def test_haversine_2(self):
-        point1 = (33.32, -111.94)
-        point2 = (33.42, -111.60)
-        distance = tncexporter.parser.haversine_distance(point1, point2)
-        assert round(distance, 2) == 33474.17
+        raw_packet = b'\x00\x00\x00\x00U\x00\x00\x00BM2MCF-12\x00APAVTT\x00\x00\x00\x00\x8a\x00' \
+                     b'\x00\x00\x00\x00\x00\x00 1:Fm BM2MCF-12 To APAVTT Via BX2ADJ-2,WIDE1,' \
+                     b'WIDE2-1 <UI pid=F0 Len=48 PF=0 >[17:44:31]\r$GPGGA,021511.000,4847.8301,N,' \
+                     b'00829.8295,E,2,11,0.9,714.1,M,47.9,M,1.8,0000*7EF0 Len=79 PF=0 >' \
+                     b'[19:15:16]\r\x00'
+        parsed = tncexporter.parser.PacketInfo(raw_packet, kiss=False)
+        assert parsed.lat_lon == (48.4783, 8.2982)
+        assert round(parsed.haversine_distance(tnc_pos=(33, -118)), 2) == 9505923.52
