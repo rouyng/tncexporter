@@ -128,7 +128,7 @@ class PacketInfo:
                     # Parse list of hops
                     # This won't parse the hops list in headers that UI-View creates, and possibly
                     # some other non-standard header formats as well.
-                    hops_string = re.findall("(?:Via )(.*?)(?: <)", data_string)[0]
+                    hops_string = re.findall("Via (.*?) <", data_string)[0]
                     # tuple of non-WIDE path types that don't represent hops through a digipeater
                     path_types = ('RELAY',
                                   'ECHO',

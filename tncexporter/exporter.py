@@ -83,7 +83,6 @@ class TNCExporter:
         await self.server.stop()  # stop prometheus server
         self.listener.disconnect()  # disconnect listener from TNC
 
-
     async def metric_updater(self):
         """Asynchronous coroutine function that reads the queue of received packets and calls
         packet_metrics on each packet in the queue. Runs on an interval defined by the update
@@ -98,9 +97,12 @@ class TNCExporter:
                     packet = await self.listener.packet_queue.get()
                     # check if KISS mode is turned on, otherwise use AGW packet parser
                     if self.kiss_mode:
-                        parsed = self.parse_packet_kiss(packet)
+                        parsed = PacketInfo(packet, kiss=True)
+                        logging.debug(f"Parsed KISS packet: {parsed.__dict__}")
                     else:
-                        parsed = self.parse_packet_agw(packet)
+                        parsed = PacketInfo(packet, kiss=False)
+                        logging.debug(f"Parsed AGW packet: {parsed.__dict__}")
+
                     self.packet_metrics(parsed)
                     logging.debug(f"Updated metrics for packet received from TNC")
                     packets_to_summarize.append(parsed)
@@ -123,24 +125,24 @@ class TNCExporter:
 
         :param packet_info: a PacketInfo object containing packet metadata
         """
-        path_type = "Digipeated" if packet_info['hops_count'] > 0 else "Simplex"
-        if packet_info['frame_type'] == 'T':
+        path_type = "Digipeated" if packet_info.hops_count > 0 else "Simplex"
+        if packet_info.frame_type == 'T':
             # if a packet is transmitted, increment PACKET_TX
             # TODO: more informative labels
             PACKET_TX.inc({'path': path_type})
         else:
             # if a packet is received and decoded, increment PACKET_RX metric
-            PACKET_RX.inc({'ax25_frame_type': packet_info['frame_type'],
+            PACKET_RX.inc({'ax25_frame_type': packet_info.frame_type,
                            'path': path_type,
-                           'from_cs': packet_info['call_from']})
-            if all([v is not None for v in packet_info['lat_lon']]) and self.location is not None:
+                           'from_cs': packet_info.call_from})
+            if all([v is not None for v in packet_info.lat_lon]) \
+                    and all([w is not None for w in self.location]):
                 # calculate distance between TNC location and packet's reported lat/lon
-                distance_from_tnc = self.haversine_distance(pos1=self.location,
-                                                            pos2=packet_info['lat_lon'])
+                distance_from_tnc = packet_info.haversine_distance(tnc_pos=self.location)
                 # Update PACKET_DISTANCE for all received packets with lat/lon info, including
                 # ones received by digipeating
                 PACKET_DISTANCE.observe({'type': 'unknown'}, distance_from_tnc)
-                if packet_info['hops_count'] == 0:
+                if packet_info.hops_count == 0:
                     # No hops means the packet was received via RF, so update RF_PACKET_DISTANCE
                     RF_PACKET_DISTANCE.observe({'type': 'unknown'}, distance_from_tnc)
 
@@ -156,23 +158,23 @@ class TNCExporter:
         max_rf_distance = 0
         max_digi_distance = 0
         if len(packets) > 0:
-            packets_rx = [p for p in packets if p['frame_type'] != 'T']
+            packets_rx = [p for p in packets if p.frame_type != 'T']
             packets_rx_count = len(packets_rx)
-            packets_tx_count = len([p for p in packets if p['frame_type'] == 'T'])
+            packets_tx_count = len([p for p in packets if p.frame_type == 'T'])
             if all([w is not None for w in self.location]):
                 # ValueError is raised if max arg is empty
                 try:
                     max_rf_distance = max(
-                        [self.haversine_distance(self.location, p['lat_lon']) for p
-                         in packets_rx if all([w is not None for w in p['lat_lon']])
-                         and p['hops_count'] == 0])
+                        [p.haversine_distance(tnc_pos=self.location) for p
+                         in packets_rx if all([w is not None for w in p.lat_lon])
+                         and p.hops_count == 0])
                 except ValueError:
                     pass
                 try:
                     max_digi_distance = max(
-                        [self.haversine_distance(self.location, p['lat_lon']) for p
-                         in packets_rx if all([w is not None for w in p['lat_lon']])
-                         and p['hops_count'] > 0])
+                        [p.haversine_distance(tnc_pos=self.location) for p
+                         in packets_rx if all([w is not None for w in p.lat_lon])
+                         and p.hops_count > 0])
                 except ValueError:
                     pass
 
