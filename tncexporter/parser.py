@@ -101,11 +101,11 @@ class PacketInfo:
         :param raw_packet: packet bytes
         """
         try:
-            self.len_data = int.from_bytes(raw_packet[28:32], signed=False, byteorder="little")
             self.frame_type = chr(raw_packet[4]).upper()
             self.call_from = raw_packet[8:18].strip(b'\x00').decode("ascii", errors="replace")
             self.call_to = raw_packet[18:28].strip(b'\x00').decode("ascii", errors="replace")
             data_bytes = raw_packet[36:].strip(b'\x00')
+            self.len_data = len(data_bytes)
             data_string = data_bytes.decode("ascii", errors="replace")
             logging.debug(f"Parsing data field: {repr(data_string)}")
             # parse timestamp
