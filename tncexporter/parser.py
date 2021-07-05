@@ -103,55 +103,47 @@ class PacketInfo:
         try:
             self.len_data = int.from_bytes(raw_packet[28:32], signed=False, byteorder="little")
             self.frame_type = chr(raw_packet[4]).upper()
-            try:
-                self.call_from = raw_packet[8:18].strip(b'\x00').decode("ascii")
-            except UnicodeDecodeError:
-                logging.exception(f"Unicode error when decoding: {raw_packet[8:18]}")
-            try:
-                self.call_to = raw_packet[18:28].strip(b'\x00').decode("ascii")
-            except UnicodeDecodeError:
-                logging.exception(f"Unicode error when decoding: {raw_packet[18:28]}")
-            try:
-                data_string = raw_packet[36:].strip(b'\x00').decode("ascii")
-                logging.debug(f"Parsing data from the following string: {repr(data_string)}")
-                # parse timestamp
-                time_match = re.search("[0-2][0-9]:[0-5][0-9]:[0-5][0-9]", data_string)
-                if time_match is not None:
-                    try:
-                        raw_hour = time_match.group()[0:2]
-                        raw_min = time_match.group()[3:5]
-                        raw_sec = time_match.group()[6:8]
-                        self.timestamp = datetime.time(hour=int(raw_hour),
-                                                       minute=int(raw_min),
-                                                       second=int(raw_sec))
-                    except TypeError:
-                        pass
+            self.call_from = raw_packet[8:18].strip(b'\x00').decode("ascii", errors="replace")
+            self.call_to = raw_packet[18:28].strip(b'\x00').decode("ascii", errors="replace")
+            data_bytes = raw_packet[36:].strip(b'\x00')
+            data_string = data_bytes.decode("ascii", errors="replace")
+            logging.debug(f"Parsing data from the following string: {repr(data_string)}")
+            # parse timestamp
+            time_match = re.search("[0-2][0-9]:[0-5][0-9]:[0-5][0-9]", data_string)
+            if time_match is not None:
                 try:
-                    # Parse list of hops
-                    # This won't parse the hops list in headers that UI-View creates, and possibly
-                    # some other non-standard header formats as well.
-                    hops_string = re.findall("Via (.*?) <", data_string)[0]
-                    # tuple of non-WIDE path types that don't represent hops through a digipeater
-                    path_types = ('RELAY',
-                                  'ECHO',
-                                  'TRACE',
-                                  'GATE',
-                                  'BEACON',
-                                  'ARISS',
-                                  'RFONLY',
-                                  'NOGATE')
-                    # regex matching all WIDE paths like WIDE1, WIDE 1-1, WIDE2-2 etc
-                    wide_regex = "^WIDE(\b|([0-9]-[0-9])|[0-9])"
-                    # determine if the packet was digipeated by making a list of hops that dont
-                    # match known "path" hop types
-                    self.hops_path = [h for h in hops_string.split(',') if h not in path_types
-                                      and re.fullmatch(wide_regex, h) is None]
-                    self.hops_count = len(self.hops_path)
-                except IndexError:
+                    raw_hour = time_match.group()[0:2]
+                    raw_min = time_match.group()[3:5]
+                    raw_sec = time_match.group()[6:8]
+                    self.timestamp = datetime.time(hour=int(raw_hour),
+                                                   minute=int(raw_min),
+                                                   second=int(raw_sec))
+                except TypeError:
                     pass
-                self._parse_coordinates(data_string)
-            except UnicodeDecodeError:
-                logging.exception("Error decoding bytes into unicode")
+            try:
+                # Parse list of hops
+                # This won't parse the hops list in headers that UI-View creates, and possibly
+                # some other non-standard header formats as well.
+                hops_string = re.findall("Via (.*?) <", data_string)[0]
+                # tuple of non-WIDE path types that don't represent hops through a digipeater
+                path_types = ('RELAY',
+                              'ECHO',
+                              'TRACE',
+                              'GATE',
+                              'BEACON',
+                              'ARISS',
+                              'RFONLY',
+                              'NOGATE')
+                # regex matching all WIDE paths like WIDE1, WIDE 1-1, WIDE2-2 etc
+                wide_regex = "^WIDE(\b|([0-9]-[0-9])|[0-9])"
+                # determine if the packet was digipeated by making a list of hops that dont
+                # match known "path" hop types
+                self.hops_path = [h for h in hops_string.split(',') if h not in path_types
+                                  and re.fullmatch(wide_regex, h) is None]
+                self.hops_count = len(self.hops_path)
+            except IndexError:
+                pass
+            self._parse_coordinates(data_string)
         except IndexError:
             logging.error("Packet less than expected length")
 
@@ -193,11 +185,8 @@ class PacketInfo:
                                   and h.strip() not in path_types
                                   and re.fullmatch(wide_regex, h.strip()) is None]
                 self.hops_count = len(self.hops_path)
-                try:
-                    logging.debug(f"Parsing position from data bytes: {repr(data_bytes)}")
-                    self._parse_coordinates(data_bytes.decode("ascii"))
-                except UnicodeDecodeError:
-                    logging.exception("Could not decode data field of packet into ascii: ")
+                logging.debug(f"Parsing position from data bytes: {repr(data_bytes)}")
+                self._parse_coordinates(data_bytes.decode("ascii", errors="replace"))
                 self.len_data = len(data_bytes)
         except IndexError:
             logging.error("Packet less than expected length")
