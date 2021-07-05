@@ -106,11 +106,11 @@ class PacketInfo:
             try:
                 self.call_from = raw_packet[8:18].strip(b'\x00').decode("ascii")
             except UnicodeDecodeError:
-                logging.debug(f"Unicode error when decoding: {raw_packet[8:18]}")
+                logging.exception(f"Unicode error when decoding: {raw_packet[8:18]}")
             try:
                 self.call_to = raw_packet[18:28].strip(b'\x00').decode("ascii")
             except UnicodeDecodeError:
-                logging.debug(f"Unicode error when decoding: {raw_packet[18:28]}")
+                logging.exception(f"Unicode error when decoding: {raw_packet[18:28]}")
             try:
                 data_string = raw_packet[36:].strip(b'\x00').decode("ascii")
                 logging.debug(f"Parsing data from the following string: {repr(data_string)}")
@@ -151,7 +151,7 @@ class PacketInfo:
                     pass
                 self._parse_coordinates(data_string)
             except UnicodeDecodeError:
-                logging.error("Error decoding bytes into unicode")
+                logging.exception("Error decoding bytes into unicode")
         except IndexError:
             logging.error("Packet less than expected length")
 
