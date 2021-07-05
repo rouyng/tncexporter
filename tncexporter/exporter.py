@@ -114,6 +114,7 @@ class TNCExporter:
             except Exception:
                 logging.exception("Error processing summary metrics from packets: ")
             # await end of sleep cycle to update metrics, defined by update-interval parameter
+            logging.info(f"Updated metrics for {len(packets_to_summarize)} packets")
             end = datetime.datetime.now()
             wait_seconds = (start + self.stats_interval - end).total_seconds()
             await asyncio.sleep(wait_seconds)
@@ -158,6 +159,7 @@ class TNCExporter:
         max_rf_distance = 0
         max_digi_distance = 0
         if len(packets) > 0:
+            logging.debug(f"Calculating summary metrics for {len(packets)} packets")
             packets_rx = [p for p in packets if p.frame_type != 'T']
             packets_rx_count = len(packets_rx)
             packets_tx_count = len([p for p in packets if p.frame_type == 'T'])
@@ -190,4 +192,3 @@ class TNCExporter:
                              packets_rx_count)
         PACKET_TX_RECENT.set({'interval': f'Last {self.stats_interval.seconds} seconds'},
                              packets_tx_count)
-        logging.info("Updated summary metrics")
