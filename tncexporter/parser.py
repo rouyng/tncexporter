@@ -187,7 +187,7 @@ class PacketInfo:
                 # Parse hops list
                 # This won't parse the hops list in headers that UI-View creates, and possibly
                 # some other non-standard header formats as well
-                self.hops_path = [h.strip() for h in re.split('[pqswz]', path_string)
+                self.hops_path = [h.strip() for h in re.split('[pqrstuwz]', path_string)
                                   if len(h.strip()) > 0
                                   and h.strip() not in path_types
                                   and re.fullmatch(wide_regex, h.strip()) is None]
