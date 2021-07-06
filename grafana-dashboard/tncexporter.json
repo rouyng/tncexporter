@@ -273,7 +273,7 @@
         "defaults": {
           "color": {
             "fixedColor": "dark-green",
-            "mode": "fixed"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisLabel": "",
@@ -331,7 +331,7 @@
       "options": {
         "legend": {
           "calcs": [],
-          "displayMode": "hidden",
+          "displayMode": "list",
           "placement": "bottom"
         },
         "tooltip": {
@@ -341,13 +341,14 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "tnc_packet_rx_recent",
+          "expr": "tnc_packet_rx_recent_path",
+          "instant": false,
           "interval": "30s",
-          "legendFormat": "{{interval}}",
+          "legendFormat": "{{path}}",
           "refId": "A"
         }
       ],
-      "title": "# Packets RX over last 30s",
+      "title": "# Packets RX by path type (last 30s)",
       "type": "timeseries"
     },
     {
@@ -376,7 +377,7 @@
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "always",
             "spanNulls": true,
             "stacking": {
               "group": "A",
@@ -426,17 +427,17 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by(path) (rate(tnc_packet_rx[$__interval]) * 60)",
+          "expr": "tnc_packet_rx_recent_frame",
           "format": "time_series",
           "instant": false,
-          "interval": "1m",
-          "legendFormat": "{{path}}",
+          "interval": "30s",
+          "legendFormat": "{{frame_type}}",
           "refId": "A"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Packets RX/minute by APRS path type",
+      "title": "# packets RX by frame type (last 30s)",
       "type": "timeseries"
     },
     {
@@ -445,70 +446,20 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
           },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "stepBefore",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "links": [],
           "mappings": [],
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "U"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
-                }
               }
             ]
           }
-        ]
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -516,33 +467,36 @@
         "x": 16,
         "y": 7
       },
-      "id": 19,
+      "id": 21,
+      "interval": "30s",
       "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
+        "displayMode": "lcd",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "mode": "single"
-        }
+        "showUnfilled": true,
+        "text": {}
       },
       "pluginVersion": "8.0.3",
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by(ax25_frame_type) (rate(tnc_packet_rx[$__interval]) * 60)",
-          "format": "time_series",
+          "expr": "floor(increase(tnc_rx_packet_size_bucket[$__range]))",
+          "format": "heatmap",
+          "hide": false,
           "instant": false,
-          "interval": "1m",
-          "legendFormat": "ceil({{path}})",
+          "interval": "30s",
+          "legendFormat": "{{le}}",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Packets RX/minute by AX.25 frame type",
-      "type": "timeseries"
+      "title": "Total # packets RX by size (≥ bytes)",
+      "type": "bargauge"
     },
     {
       "datasource": null,
@@ -551,7 +505,7 @@
         "defaults": {
           "color": {
             "fixedColor": "orange",
-            "mode": "fixed"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisLabel": "",
@@ -605,121 +559,6 @@
       "options": {
         "legend": {
           "calcs": [],
-          "displayMode": "hidden",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single"
-        }
-      },
-      "targets": [
-        {
-          "exemplar": true,
-          "expr": "tnc_packet_tx_recent",
-          "interval": "30s",
-          "legendFormat": "{{interval}}",
-          "refId": "A"
-        }
-      ],
-      "title": "# Packets TX over last 30s",
-      "type": "timeseries"
-    },
-    {
-      "datasource": null,
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "stepBefore",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "links": [],
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Simplex"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "yellow",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Digi"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 15
-      },
-      "id": 11,
-      "options": {
-        "legend": {
-          "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
@@ -727,21 +566,16 @@
           "mode": "single"
         }
       },
-      "pluginVersion": "8.0.3",
       "targets": [
         {
           "exemplar": true,
-          "expr": "rate(tnc_packet_tx[$__interval]) * 60",
-          "format": "time_series",
-          "instant": false,
-          "interval": "1m",
+          "expr": "tnc_packet_tx_recent_path",
+          "interval": "30s",
           "legendFormat": "{{path}}",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Packets TX/minute by APRS Path Type",
+      "title": "# Packets TX by path type (last 30s)",
       "type": "timeseries"
     },
     {
@@ -754,15 +588,11 @@
           },
           "mappings": [],
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           }
@@ -775,7 +605,7 @@
         "x": 16,
         "y": 15
       },
-      "id": 21,
+      "id": 22,
       "interval": "30s",
       "options": {
         "displayMode": "lcd",
@@ -794,16 +624,16 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "ceil(increase(tnc_rx_packet_size_bucket[$__range]))",
+          "expr": "floor(increase(tnc_tx_packet_size_bucket[$__range]))",
           "format": "heatmap",
           "hide": false,
           "instant": false,
-          "interval": "",
+          "interval": "30s",
           "legendFormat": "{{le}}",
           "refId": "A"
         }
       ],
-      "title": "# packets RX by size (≥ bytes)",
+      "title": "Total # packets TX by size (≥ bytes)",
       "type": "bargauge"
     }
   ],
@@ -815,7 +645,7 @@
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {
@@ -834,5 +664,5 @@
   "timezone": "",
   "title": "TNC Exporter",
   "uid": "CZQvi6zRk",
-  "version": 1
+  "version": 3
 }

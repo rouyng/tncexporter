@@ -17,7 +17,11 @@ PACKET_TX = Counter("tnc_packet_tx",
                     "Number of packets transmitted")
 
 RX_PACKET_SIZE = Histogram("tnc_rx_packet_size",
-                        "Length in bytes of data field in packet",
+                        "Length in bytes of data field in received packets",
+                           buckets=[0, 50, 100, 150, 200, 250, 300, 350])
+
+TX_PACKET_SIZE = Histogram("tnc_tx_packet_size",
+                        "Length in bytes of data field in transmitted packets",
                            buckets=[0, 50, 100, 150, 200, 250, 300, 350])
 
 # Summary metrics tracking distances of received frames. Only calculated for frames that report
@@ -36,8 +40,10 @@ MAX_DISTANCE_RECENT = Gauge("tnc_max_range_recent",
 MAX_RF_DISTANCE_RECENT = Gauge("tnc_max_rf_range_recent",
                             "Maximum range in meters of non-digipeated position frames received over last time "
                             "period")
-PACKET_RX_RECENT = Gauge("tnc_packet_rx_recent",
-                         "Number of packets received over last time period")
-PACKET_TX_RECENT = Gauge("tnc_packet_tx_recent",
-                         "Number of packets transmitted over last time period")
+PACKET_RX_RECENT_PATH = Gauge("tnc_packet_rx_recent_path",
+                         "Number of packets received over last time period, labeled by path type")
+PACKET_RX_RECENT_FRAME = Gauge("tnc_packet_rx_recent_frame",
+                         "Number of packets received over last time period, labeled by AX.25 frame type")
+PACKET_TX_RECENT_PATH = Gauge("tnc_packet_tx_recent_path",
+                         "Number of packets transmitted over last time period, labeled by path type")
 

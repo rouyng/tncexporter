@@ -34,8 +34,8 @@ TNC exporter provides the following metrics. See prometheus docs for a [discussi
 - PACKET_TX: Counter, Number of packets transmitted
 - MAX_DISTANCE_RECENT: Gauge, Maximum range in meters of position frames received over last time period. Includes digipeated packets.
 - MAX_RF_DISTANCE_RECENT: Gauge, Maximum range in meters of non-digipeated position packets received over last time period.
-- PACKET_RX_RECENT: Gauge, number of packets received over last time period.
-- PACKET_TX_RECENT: Gauge, number of packets transmitted over last time period.
+- PACKET_RX_RECENT: Gauge, number of packets received over last time period. Labels for path (Simplex/Digipeated) and frame type.
+- PACKET_TX_RECENT: Gauge, number of packets transmitted over last time period. Labels for path type.
 - RX_PACKET_SIZE: Histogram, size in bytes of received packets. Bucketed in increments of 50 from 0 to 350.
 
 *Currently not used in dashboard*

@@ -5,8 +5,9 @@ process_packets is called from the main application loop
 
 """
 
-from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, RX_PACKET_SIZE, \
-    RF_PACKET_DISTANCE, MAX_DISTANCE_RECENT, PACKET_RX_RECENT, PACKET_TX_RECENT
+from .metrics import PACKET_RX, PACKET_TX, PACKET_DISTANCE, RX_PACKET_SIZE, TX_PACKET_SIZE, \
+    RF_PACKET_DISTANCE, MAX_DISTANCE_RECENT, PACKET_RX_RECENT_PATH, PACKET_RX_RECENT_FRAME, \
+    PACKET_TX_RECENT_PATH
 import asyncio
 import datetime
 import logging
@@ -42,11 +43,13 @@ class TNCExporter:
         self.register_metrics((PACKET_RX,
                                PACKET_TX,
                                RX_PACKET_SIZE,
+                               TX_PACKET_SIZE,
                                PACKET_DISTANCE,
                                RF_PACKET_DISTANCE,
                                MAX_DISTANCE_RECENT,
-                               PACKET_RX_RECENT,
-                               PACKET_TX_RECENT
+                               PACKET_RX_RECENT_PATH,
+                               PACKET_RX_RECENT_FRAME,
+                               PACKET_TX_RECENT_PATH
                                ))
 
     def register_metrics(self, metrics_list: tuple):
@@ -131,8 +134,8 @@ class TNCExporter:
 
         if packet_info.frame_type == 'T':
             # if a packet is transmitted, increment PACKET_TX
-            # TODO: more informative labels
             PACKET_TX.inc({'path': path_type})
+            TX_PACKET_SIZE.observe({}, packet_info.len_data)
         else:
             RX_PACKET_SIZE.observe({}, packet_info.len_data)
             # if a packet is received and decoded, increment PACKET_RX metric
@@ -157,15 +160,33 @@ class TNCExporter:
 
         :param packets: a list of PacketInfo objects containing packet metadata
         """
-        packets_rx_count = 0
-        packets_tx_count = 0
-        max_rf_distance = 0
-        max_digi_distance = 0
+        packets_rx_count: int = 0
+        packets_rx_u_count: int = 0
+        packets_rx_i_count: int = 0
+        packets_rx_s_count: int = 0
+        packets_rx_unknown_count: int = 0
+        packets_rx_digi_count: int = 0
+        packets_rx_simplex_count: int = 0
+        packets_tx_count: int = 0
+        packets_tx_digi_count: int = 0
+        packets_tx_simplex_count: int = 0
+        max_rf_distance: float = 0
+        max_digi_distance: float = 0
         if len(packets) > 0:
             logging.debug(f"Calculating summary metrics for {len(packets)} packets")
             packets_rx = [p for p in packets if p.frame_type != 'T']
+            packets_tx = [p for p in packets if p.frame_type == 'T']
             packets_rx_count = len(packets_rx)
-            packets_tx_count = len([p for p in packets if p.frame_type == 'T'])
+            packets_rx_u_count = len([p for p in packets_rx if p.frame_type == 'U'])
+            packets_rx_i_count = len([p for p in packets_rx if p.frame_type == 'I'])
+            packets_rx_s_count = len([p for p in packets_rx if p.frame_type == 'S'])
+            packets_rx_unknown_count = len([p for p in packets_rx if p.frame_type == 'Unknown'])
+            packets_rx_digi_count = len([p for p in packets_rx if p.hops_count > 0])
+            packets_rx_simplex_count = len([p for p in packets_rx if p.hops_count == 0])
+            packets_tx_count = len(packets_tx)
+            packets_tx_digi_count = len([p for p in packets_tx if p.hops_count > 0])
+            packets_tx_simplex_count = len([p for p in packets_tx if p.hops_count == 0])
+
             if all([w is not None for w in self.location]):
                 # ValueError is raised if max arg is empty
                 try:
@@ -184,14 +205,63 @@ class TNCExporter:
                     pass
 
         # Update summary metrics for last update interval
-        # TODO: additional summary metrics with labels for path and frame type
         MAX_DISTANCE_RECENT.set({'interval': f'Last {self.stats_interval.seconds} seconds',
                                  'path': 'Simplex'},
                                 max_rf_distance)
         MAX_DISTANCE_RECENT.set({'interval': f'Last {self.stats_interval.seconds} seconds',
                                  'path': 'Digipeated'},
                                 max_digi_distance)
-        PACKET_RX_RECENT.set({'interval': f'Last {self.stats_interval.seconds} seconds'},
-                             packets_rx_count)
-        PACKET_TX_RECENT.set({'interval': f'Last {self.stats_interval.seconds} seconds'},
-                             packets_tx_count)
+        # Set count of all packets received, including all paths and frame types
+        PACKET_RX_RECENT_FRAME.set({'interval': f'Last {self.stats_interval.seconds} seconds',
+                                    'path': 'All',
+                                    'frame_type': 'All'},
+                                   packets_rx_count)
+        # Set count of U frames received
+        PACKET_RX_RECENT_FRAME.set({'interval': f'Last {self.stats_interval.seconds} seconds',
+                                    'path': 'All',
+                                    'frame_type': 'U'},
+                                   packets_rx_u_count)
+        # Set count of I frames received
+        PACKET_RX_RECENT_FRAME.set({'interval': f'Last {self.stats_interval.seconds} seconds',
+                                    'path': 'All',
+                                    'frame_type': 'I'},
+                                   packets_rx_i_count)
+        # Set count of S frames received
+        PACKET_RX_RECENT_FRAME.set({'interval': f'Last {self.stats_interval.seconds} seconds',
+                                    'path': 'All',
+                                    'frame_type': 'S'},
+                                   packets_rx_s_count)
+        # Set count of unknown type frames received
+        PACKET_RX_RECENT_FRAME.set({'interval': f'Last {self.stats_interval.seconds} seconds',
+                                    'path': 'All',
+                                    'frame_type': 'Unknown'},
+                                   packets_rx_unknown_count)
+        # Set count of simplex packets received, including all frame types
+        PACKET_RX_RECENT_PATH.set({'interval': f'Last {self.stats_interval.seconds} seconds',
+                                   'path': 'All',
+                                   'frame_type': 'All'},
+                                  packets_rx_count)
+        # Set count of simplex packets received, including all frame types
+        PACKET_RX_RECENT_PATH.set({'interval': f'Last {self.stats_interval.seconds} seconds',
+                                   'path': 'Simplex',
+                                   'frame_type': 'All'},
+                                  packets_rx_simplex_count)
+        # Set count of digipeated packets received, including all frame types
+        PACKET_RX_RECENT_PATH.set({'interval': f'Last {self.stats_interval.seconds} seconds',
+                                   'path': 'Digipeated',
+                                   'frame_type': 'All'},
+                                  packets_rx_digi_count)
+        PACKET_TX_RECENT_PATH.set({'interval': f'Last {self.stats_interval.seconds} seconds',
+                                   'path': 'All',
+                                   'frame_type': 'All'},
+                                  packets_tx_count)
+        # Set count of simplex packets transmitted, including all frame types
+        PACKET_TX_RECENT_PATH.set({'interval': f'Last {self.stats_interval.seconds} seconds',
+                                   'path': 'Simplex',
+                                   'frame_type': 'All'},
+                                  packets_tx_simplex_count)
+        # Set count of digipeated packets transmitted, including all frame types
+        PACKET_TX_RECENT_PATH.set({'interval': f'Last {self.stats_interval.seconds} seconds',
+                                   'path': 'Digipeated',
+                                   'frame_type': 'All'},
+                                  packets_tx_digi_count)
