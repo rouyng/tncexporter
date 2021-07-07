@@ -1,6 +1,7 @@
 # TNC exporter
 
 ![Screenshot of TNC exporter's Grafana dashboard](grafana-dashboard/dashboard.png)
+*Screenshot of TNC exporter Grafana dashboard, using direwolf decoding audio from the WA8LMF TNC test CD*
 
 A [prometheus](https://prometheus.io/) exporter for collecting metrics from a [terminal node controller (TNC)](https://en.wikipedia.org/wiki/Terminal_node_controller) used in packet radio networks. These metrics can be visualized in [grafana](https://grafana.com/) using the included dashboard. It utilizes the AGW or KISS TCP/IP interfaces provided by the software TNC [direwolf](https://github.com/wb2osz/direwolf). Other TNCs such as [UZ7HO sound modem](http://uz7.ho.ua/packetradio.htm) and [AGW Packet Engine](https://www.sv2agw.com/ham#pepro) that provide AGW or KISS interfaces may also work, but are not officially supported or tested.
 
