@@ -2,7 +2,7 @@
 
 ![Screenshot of TNC exporter's Grafana dashboard](grafana-dashboard/dashboard.png)
 
-A [prometheus](https://prometheus.io/) exporter for collecting metrics from a [terminal node controller (TNC)](https://en.wikipedia.org/wiki/Terminal_node_controller) used in packet radio networks. These metrics can be visualized in [grafana](https://grafana.com/) using the included dashboard. It utilizes the AGWPE or KISS TCP/IP interfaces provided by the software TNC [direwolf](https://github.com/wb2osz/direwolf). Other TNCs such as [UZ7HO sound modem](http://uz7.ho.ua/packetradio.htm) and [AGW Packet Engine](https://www.sv2agw.com/ham#pepro) that provide AGWPE or KISS interfaces may also work, but are not officially supported or tested.
+A [prometheus](https://prometheus.io/) exporter for collecting metrics from a [terminal node controller (TNC)](https://en.wikipedia.org/wiki/Terminal_node_controller) used in packet radio networks. These metrics can be visualized in [grafana](https://grafana.com/) using the included dashboard. It utilizes the AGW or KISS TCP/IP interfaces provided by the software TNC [direwolf](https://github.com/wb2osz/direwolf). Other TNCs such as [UZ7HO sound modem](http://uz7.ho.ua/packetradio.htm) and [AGW Packet Engine](https://www.sv2agw.com/ham#pepro) that provide AGW or KISS interfaces may also work, but are not officially supported or tested.
 
 - [What does this do? Why should I use it?](#what-does-this-do-why-should-i-use-it)
 - [What are prometheus and grafana?](#what-are-prometheus-and-grafana)
@@ -17,7 +17,7 @@ A [prometheus](https://prometheus.io/) exporter for collecting metrics from a [t
 
 ## What does this do? Why should I use it?
 
-TNC exporter uses modern metrics collection and visualization tools (prometheus and grafana) to provide a  legible, beautiful and customizable interface to view and analyze TNC activity over time. This may be of particular use to packet radio infrastructure operators, such as APRS digipeater/iGate owners who want to better understand usage patterns.
+TNC exporter uses modern metrics collection and visualization tools (prometheus and grafana) to provide a  legible, beautiful and customizable interface to view and analyze TNC activity over time. This may be particularly useful to packet radio infrastructure operators, such as APRS digipeater/iGate owners who want to better understand usage patterns.
 
 TNC exporter listens on one of the AGW or KISS TCP/IP interfaces provided by your TNC and parses packets decoded and transmitted by the TNC. This packet information is converted into time-series data which can be scraped and stored by a prometheus database and subsequently visualized using a grafana dashboard.
 
@@ -108,18 +108,18 @@ Download TNC exporter by using the green "Code" download button at the top of th
 
 Once you have downloaded a local copy of TNC exporter, open a terminal in the tncexporter directory you just created. At this point I highly recommend creating a python virtual environment before installing dependencies ([see instructions here for using Pipenv or the builtin virtualenv tool](https://docs.python-guide.org/dev/virtualenvs/)). Once you have set up a virtual environment (or not) install the additional required dependencies by running:
 
-`pip install -r requirements.txt`
+`pip3 install -r requirements.txt`
 
 Now you should be ready to [run TNC exporter](#running-and-configuring-tnc-exporter).
 
 ## Running and configuring TNC exporter
 The basic command to run TNC exporter is:
 
-`python -m tncexporter`
+`python3 -m tncexporter`
 
 There are multiple command line options to configure TNC exporter. See descriptions of these by running:
 
-`python -m tncexporter --help` 
+`python3 -m tncexporter --help` 
 
 ### AGW mode vs. KISS mode
 
@@ -138,7 +138,7 @@ Please note that TNC exporter does not parse APRS compressed format or Mic-E for
 
 ### Testing
 
-Once TNC exporter is running and connected to your TNC, you can check that it is publishing metrics by visiting the "/metrics" endpoint with your web browser. By default this is at: `http://localhost:9110/metrics`
+Once TNC exporter is running and connected to your TNC, you can check that it is publishing metrics by visiting the "/metrics" endpoint with your web browser. By default, this is at: `http://localhost:9110/metrics`
 
 You should see something like the following (actual values may differ if the TNC is actively receiving packets):
 
