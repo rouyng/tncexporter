@@ -28,9 +28,9 @@ TX_PACKET_SIZE = Histogram("tnc_tx_packet_size",
 # position data (APRS). Not currently used in dashboard
 PACKET_DISTANCE = Summary("tnc_packet_distance",
                           "Distance in meters of received position packets from TNC "
-                          "(digipeated and RF)")
+                          "(digipeated and simplex)")
 RF_PACKET_DISTANCE = Summary("tnc_rf_packet_distance",
-                             "Distance in meters of received position packets from TNC (RF only)")
+                             "Distance in meters of received position packets from TNC (simplex only)")
 
 # Aggregate metrics, calculated from all packets collected across the interval
 # defined by update_interval

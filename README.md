@@ -4,7 +4,7 @@
 
 A [prometheus](https://prometheus.io/) exporter for collecting metrics from a [terminal node controller (TNC)](https://en.wikipedia.org/wiki/Terminal_node_controller) used in packet radio networks. These metrics can be visualized in [grafana](https://grafana.com/) using the included dashboard. It utilizes the AGWPE or KISS TCP/IP interfaces provided by the software TNC [direwolf](https://github.com/wb2osz/direwolf). Other TNCs such as [UZ7HO sound modem](http://uz7.ho.ua/packetradio.htm) and [AGW Packet Engine](https://www.sv2agw.com/ham#pepro) that provide AGWPE or KISS interfaces may also work, but are not officially supported or tested.
 
-- [Why should I use it?](#why-should-i-use-it)
+- [What does this do? Why should I use it?](#what-does-this-do-why-should-i-use-it)
 - [What are prometheus and grafana?](#what-are-prometheus-and-grafana)
 - [Metrics](#metrics)
 - [Installation guide](#installation-guide)
@@ -15,13 +15,26 @@ A [prometheus](https://prometheus.io/) exporter for collecting metrics from a [t
 - [Acknowledgements](#acknowledgements)
 - [License](#license)
 
-## Why should I use it?
-TNC exporter provides an interface for collecting and visualizing metrics from your TNC. Using this exporter, prometheus, and grafana, you can visualize at a glance the quantity of packet RX/TX across your TNC, quantity of packets by different path and frame type, and distance of packets received (for packets that report location data). You can also customize the example grafana dashboard, build your own or directly query metrics using prometheus' built-in tools. 
+## What does this do? Why should I use it?
+
+TNC exporter uses modern metrics collection and visualization tools (prometheus and grafana) to provide a  legible, beautiful and customizable interface to view and analyze TNC activity over time. This may be of particular use to packet radio infrastructure operators, such as APRS digipeater/iGate owners who want to better understand usage patterns.
+
+TNC exporter listens on one of the AGW or KISS TCP/IP interfaces provided by your TNC and parses packets decoded and transmitted by the TNC. This packet information is converted into time-series data which can be scraped and stored by a prometheus database and subsequently visualized using a grafana dashboard.
+
+Using this exporter, prometheus, and grafana, you can visualize the following metrics at a glance:
+- Quantity of packets received and transmitted by your TNC 
+- Quantity of packets by different path and frame type 
+- Distance of packets received (for packets that report location data)
+- Size of packets
+
+While TNC exporter is packaged with a ready-to-use grafana dashboard to display these metrics, it also allows you to customize how you view your metrics. You can modify the included grafana dashboard, build your own dashboard, or directly query metrics without grafana using prometheus' built-in tools.
+
+
 
 ## What are prometheus and grafana?
-[Prometheus](https://prometheus.io/) is a free, open source monitoring tool that collects and stores time-series data. While prometheus has a built-in web interface, it is primarily designed to store and serve data, not display it. Some programs natively export metrics in a prometheus-friendly format, while others require a helper program called an "exporter" that enables prometheus to pull metrics. Administrators, developers and enthusiasts use Prometheus to monitor everything from CPU usage to network throughput. Prometheus has the flexibility to monitor most data that fits in time-series format.
+[Prometheus](https://prometheus.io/) is a free, open source monitoring tool that collects and stores time-series data. While prometheus has a built-in web interface, it is primarily designed to collect, store and serve data, not display it. Metrics are collected from various sources by pulling (or "scraping") from HTTP endpoints which host metrics in a prometheus-friendly format. Some programs natively host a prometheus metrics endpoint, while others require a helper program called an "exporter" that collects metrics and creates an endpoint. Administrators, developers and enthusiasts use Prometheus to monitor everything from CPU usage to network throughput. Prometheus has the flexibility to monitor most data that fits in time-series format.
 
-[Grafana](https://grafana.com/) is an open source application for building, viewing and customizing graphical dashboards. Grafana can integrate with a Prometheus server to display time-series data in a variety of legible, flexible and beautiful formats. TNC exporter includes an example grafana dashboard, but this can be easily modified or replaced to suit your own needs.
+[Grafana](https://grafana.com/) is an open source application for building, viewing and customizing graphical dashboards. Grafana can integrate with a Prometheus server to display time-series data in a variety of legible, customizable and beautiful formats. TNC exporter includes an example grafana dashboard, but this can be easily modified or replaced to suit your own needs.
 
 Grafana isn't the only way to visualize Prometheus time-series data. You can use prometheus' [built-in expression browser](https://prometheus.io/docs/visualization/browser/), the prometheus templating language to [build your own console](https://prometheus.io/docs/visualization/consoles/), or any third-party tools that support Prometheus.
 
@@ -60,7 +73,7 @@ TNC exporter requires Python 3.9. You can download Python for all major operatin
 
 Please consult the [Prometheus](https://prometheus.io/docs/prometheus/latest/getting_started/) and [Grafana documentation](https://grafana.com/docs/grafana/latest/installation/requirements/) for system requirements of those applications.
 
-The total requirements for all these programs are fairly minimal, and all should happily run on a Raspberry Pi alongside Direwolf. 
+The total requirements for all these programs are fairly minimal, and all should happily run on a Raspberry Pi 3 or newer, alongside Direwolf. 
 
 ### Installing prometheus
 A full guide on how to install and configure prometheus is outside the scope of this readme. Please consult the [official Prometheus installation guide](https://prometheus.io/docs/prometheus/latest/installation/) or the many other online tutorials available.
@@ -121,33 +134,48 @@ If you want distance metrics, add your TNC's latitude and longitude in decimal d
 
 The above example sets the TNC's position at 40.7484°N, 73.9855°W. South latitudes and west longitudes are entered as negative numbers. TNC exporter will now calculate distances of received position packets relative to this location. 
 
-Please note that TNC exporter does not parse APRS compressed format or Mic-E format position reports. Currently, only those packets that provide latitude/longitude in plaintext update distance metrics. Mic-E/compressed position report parsing is planned for a future release.
+Please note that TNC exporter does not parse APRS compressed format or Mic-E format position reports. Currently, only packets that provide latitude/longitude in plaintext will update distance metrics. Mic-E/compressed position report parsing is planned for a future release.
 
 ### Testing
 
 Once TNC exporter is running and connected to your TNC, you can check that it is publishing metrics by visiting the "/metrics" endpoint with your web browser. By default this is at: `http://localhost:9110/metrics`
 
-You should see something like the following (may differ if the TNC is actively receiving packets):
+You should see something like the following (actual values may differ if the TNC is actively receiving packets):
 
 ```
 # HELP tnc_max_range_recent Maximum range in meters of position frames received over last time period. Includes digipeated frames
 # TYPE tnc_max_range_recent gauge
 tnc_max_range_recent{interval="Last 30 seconds",path="Simplex"} 0
-tnc_max_range_recent{interval="Last 30 seconds",path="Digi"} 0
+tnc_max_range_recent{interval="Last 30 seconds",path="Digipeated"} 0
 # HELP tnc_packet_distance Distance in meters of received position packets from TNC (digipeated and RF)
 # TYPE tnc_packet_distance summary
 # HELP tnc_packet_rx Number of packets received and decoded
 # TYPE tnc_packet_rx counter
-# HELP tnc_packet_rx_recent Number of packets received over last time period
-# TYPE tnc_packet_rx_recent gauge
-tnc_packet_rx_recent{interval="Last 30 seconds"} 0
+# HELP tnc_packet_rx_recent_frame Number of packets received over last time period, labeled by AX.25 frame type
+# TYPE tnc_packet_rx_recent_frame gauge
+tnc_packet_rx_recent_frame{frame_type="All",interval="Last 30 seconds",path="All"} 0
+tnc_packet_rx_recent_frame{frame_type="U",interval="Last 30 seconds",path="All"} 0
+tnc_packet_rx_recent_frame{frame_type="I",interval="Last 30 seconds",path="All"} 0
+tnc_packet_rx_recent_frame{frame_type="S",interval="Last 30 seconds",path="All"} 0
+tnc_packet_rx_recent_frame{frame_type="Unknown",interval="Last 30 seconds",path="All"} 0
+# HELP tnc_packet_rx_recent_path Number of packets received over last time period, labeled by path type
+# TYPE tnc_packet_rx_recent_path gauge
+tnc_packet_rx_recent_path{frame_type="All",interval="Last 30 seconds",path="All"} 0
+tnc_packet_rx_recent_path{frame_type="All",interval="Last 30 seconds",path="Simplex"} 0
+tnc_packet_rx_recent_path{frame_type="All",interval="Last 30 seconds",path="Digipeated"} 0
 # HELP tnc_packet_tx Number of packets transmitted
 # TYPE tnc_packet_tx counter
-# HELP tnc_packet_tx_recent Number of packets transmitted over last time period
-# TYPE tnc_packet_tx_recent gauge
-tnc_packet_tx_recent{interval="Last 30 seconds"} 0
+# HELP tnc_packet_tx_recent_path Number of packets transmitted over last time period, labeled by path type
+# TYPE tnc_packet_tx_recent_path gauge
+tnc_packet_tx_recent_path{frame_type="All",interval="Last 30 seconds",path="All"} 0
+tnc_packet_tx_recent_path{frame_type="All",interval="Last 30 seconds",path="Simplex"} 0
+tnc_packet_tx_recent_path{frame_type="All",interval="Last 30 seconds",path="Digipeated"} 0
 # HELP tnc_rf_packet_distance Distance in meters of received position packets from TNC (RF only)
 # TYPE tnc_rf_packet_distance summary
+# HELP tnc_rx_packet_size Length in bytes of data field in received packets
+# TYPE tnc_rx_packet_size histogram
+# HELP tnc_tx_packet_size Length in bytes of data field in transmitted packets
+# TYPE tnc_tx_packet_size histogram
 ```
 
 ## Support and common issues
