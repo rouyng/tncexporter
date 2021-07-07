@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 9,
+  "id": 5,
   "links": [],
   "panels": [
     {
@@ -70,7 +70,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "RX Count",
+      "title": "Total RX Count",
       "type": "stat"
     },
     {
@@ -123,7 +123,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "TX Count",
+      "title": "Total TX Count",
       "type": "stat"
     },
     {
@@ -233,13 +233,14 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "lengthkm"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 7,
-        "w": 16,
+        "w": 13,
         "x": 8,
         "y": 0
       },
@@ -263,8 +264,64 @@
           "refId": "A"
         }
       ],
-      "title": "Max RX range of APRS position packets (km)",
+      "title": "Max RX range of APRS position packets (last 30s)",
       "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "lengthkm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 3,
+        "x": 21,
+        "y": 0
+      },
+      "id": 25,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "max"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.0.3",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "tnc_max_range_recent / 1000",
+          "interval": "",
+          "legendFormat": "{{path}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Max APRS RX range",
+      "type": "stat"
     },
     {
       "datasource": null,
@@ -323,7 +380,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
+        "w": 12,
         "x": 0,
         "y": 7
       },
@@ -350,153 +407,6 @@
       ],
       "title": "# Packets RX by path type (last 30s)",
       "type": "timeseries"
-    },
-    {
-      "datasource": null,
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "stepBefore",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "always",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "links": [],
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 7
-      },
-      "id": 2,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single"
-        }
-      },
-      "pluginVersion": "8.0.3",
-      "targets": [
-        {
-          "exemplar": true,
-          "expr": "tnc_packet_rx_recent_frame",
-          "format": "time_series",
-          "instant": false,
-          "interval": "30s",
-          "legendFormat": "{{frame_type}}",
-          "refId": "A"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "# packets RX by frame type (last 30s)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": null,
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "percentage",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 7
-      },
-      "id": 21,
-      "interval": "30s",
-      "options": {
-        "displayMode": "lcd",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "last"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": true,
-        "text": {}
-      },
-      "pluginVersion": "8.0.3",
-      "targets": [
-        {
-          "exemplar": true,
-          "expr": "floor(increase(tnc_rx_packet_size_bucket[$__range]))",
-          "format": "heatmap",
-          "hide": false,
-          "instant": false,
-          "interval": "30s",
-          "legendFormat": "{{le}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Total # packets RX by size (≥ bytes)",
-      "type": "bargauge"
     },
     {
       "datasource": null,
@@ -551,9 +461,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 15
+        "w": 12,
+        "x": 12,
+        "y": 7
       },
       "id": 18,
       "options": {
@@ -584,47 +494,124 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "palette-classic"
           },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "stepBefore",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
           "mappings": [],
           "thresholds": {
-            "mode": "percentage",
+            "mode": "absolute",
             "steps": [
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
-          }
+          },
+          "unit": "packets"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
         "w": 8,
-        "x": 16,
+        "x": 0,
         "y": 15
       },
-      "id": 22,
-      "interval": "30s",
+      "id": 2,
       "options": {
-        "displayMode": "lcd",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "last"
-          ],
-          "fields": "",
-          "values": false
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
         },
-        "showUnfilled": true,
-        "text": {}
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "pluginVersion": "8.0.3",
       "targets": [
         {
           "exemplar": true,
-          "expr": "floor(increase(tnc_tx_packet_size_bucket[$__range]))",
+          "expr": "tnc_packet_rx_recent_frame",
+          "format": "time_series",
+          "instant": false,
+          "interval": "30s",
+          "legendFormat": "{{frame_type}}",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "# packets RX by frame type (last 30s)",
+      "type": "timeseries"
+    },
+    {
+      "cards": {
+        "cardPadding": null,
+        "cardRound": null
+      },
+      "color": {
+        "cardColor": "#b4ff00",
+        "colorScale": "sqrt",
+        "colorScheme": "interpolateOranges",
+        "exponent": 0.5,
+        "mode": "spectrum"
+      },
+      "dataFormat": "tsbuckets",
+      "datasource": null,
+      "description": "",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 15
+      },
+      "heatmap": {},
+      "hideZeroBuckets": false,
+      "highlightCards": true,
+      "id": 23,
+      "interval": "30s",
+      "legend": {
+        "show": false
+      },
+      "pluginVersion": "8.0.3",
+      "reverseYBuckets": false,
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "ceil(increase(tnc_rx_packet_size_bucket[$__interval]))",
           "format": "heatmap",
           "hide": false,
           "instant": false,
@@ -633,8 +620,96 @@
           "refId": "A"
         }
       ],
-      "title": "Total # packets TX by size (≥ bytes)",
-      "type": "bargauge"
+      "title": "# packets RX by size (last 30s)",
+      "tooltip": {
+        "show": true,
+        "showHistogram": false
+      },
+      "type": "heatmap",
+      "xAxis": {
+        "show": true
+      },
+      "xBucketNumber": null,
+      "xBucketSize": null,
+      "yAxis": {
+        "decimals": null,
+        "format": "bytes",
+        "logBase": 1,
+        "max": null,
+        "min": null,
+        "show": true,
+        "splitFactor": null
+      },
+      "yBucketBound": "auto",
+      "yBucketNumber": null,
+      "yBucketSize": null
+    },
+    {
+      "cards": {
+        "cardPadding": null,
+        "cardRound": null
+      },
+      "color": {
+        "cardColor": "#b4ff00",
+        "colorScale": "sqrt",
+        "colorScheme": "interpolateOranges",
+        "exponent": 0.5,
+        "mode": "spectrum"
+      },
+      "dataFormat": "tsbuckets",
+      "datasource": null,
+      "description": "",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 15
+      },
+      "heatmap": {},
+      "hideZeroBuckets": false,
+      "highlightCards": true,
+      "id": 22,
+      "interval": "30s",
+      "legend": {
+        "show": false
+      },
+      "pluginVersion": "8.0.3",
+      "reverseYBuckets": false,
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "ceil(increase(tnc_tx_packet_size_bucket[$__interval]))",
+          "format": "heatmap",
+          "hide": false,
+          "instant": false,
+          "interval": "30s",
+          "legendFormat": "{{le}}",
+          "refId": "A"
+        }
+      ],
+      "title": "# packets TX by size (last 30s)",
+      "tooltip": {
+        "show": true,
+        "showHistogram": false
+      },
+      "type": "heatmap",
+      "xAxis": {
+        "show": true
+      },
+      "xBucketNumber": null,
+      "xBucketSize": null,
+      "yAxis": {
+        "decimals": null,
+        "format": "bytes",
+        "logBase": 1,
+        "max": null,
+        "min": null,
+        "show": true,
+        "splitFactor": null
+      },
+      "yBucketBound": "auto",
+      "yBucketNumber": null,
+      "yBucketSize": null
     }
   ],
   "refresh": "30s",
@@ -645,7 +720,7 @@
     "list": []
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {
@@ -663,6 +738,6 @@
   },
   "timezone": "",
   "title": "TNC Exporter",
-  "uid": "CZQvi6zRk",
-  "version": 3
+  "uid": "tzsMlkm7z",
+  "version": 6
 }
