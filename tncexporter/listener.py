@@ -96,7 +96,8 @@ class Listener:
 
     def disconnect(self):
         """Close client socket connection"""
-        self.client_socket.close()
+        self.client_socket.shutdown(socket.SHUT_RDWR)
+        self.client_socket.detach()
         logging.info("Closed connection to TNC")
 
     async def receive_packets(self):
