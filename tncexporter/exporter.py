@@ -108,7 +108,7 @@ class TNCExporter:
                         logging.debug(f"Parsed AGW packet: {parsed.__dict__}")
 
                     self.packet_metrics(parsed)
-                    logging.debug(f"Updated metrics for packet received from TNC")
+                    logging.debug("Updated metrics for packet received from TNC")
                     packets_to_summarize.append(parsed)
                     self.listener.packet_queue.task_done()
             except Exception:
