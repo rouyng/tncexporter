@@ -5,7 +5,7 @@ import datetime
 import logging
 import re
 from math import asin, cos, sin, sqrt, radians
-
+from typing import Tuple
 
 class PacketInfo:
     """Object for parsing and storing AX.25 packet metadata"""
@@ -68,7 +68,7 @@ class PacketInfo:
 
     def haversine_distance(
             self,
-            tnc_pos: tuple[float, float],
+            tnc_pos: Tuple[float, float],
             radius: float = 6371.0e3
     ) -> float:
         """

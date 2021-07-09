@@ -15,6 +15,7 @@ from .listener import Listener
 from asyncio.events import AbstractEventLoop
 from aioprometheus import Service
 from .parser import PacketInfo
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +154,7 @@ class TNCExporter:
                     # No hops means the packet was received via RF, so update RF_PACKET_DISTANCE
                     RF_PACKET_DISTANCE.observe({'type': 'unknown'}, distance_from_tnc)
 
-    def summary_metrics(self, packets: list[PacketInfo]):
+    def summary_metrics(self, packets: List[PacketInfo]):
         """
         Function that processes multiple PacketInfo object
          and updates Prometheus metrics based on aggregate measurements across the update interval.
