@@ -96,7 +96,8 @@ class Listener:
 
     def disconnect(self):
         """Close client socket connection"""
-        self.client_socket.close()
+        self.client_socket.shutdown(socket.SHUT_RDWR)
+        self.client_socket.detach()
         logging.info("Closed connection to TNC")
 
     async def receive_packets(self):
@@ -104,6 +105,14 @@ class Listener:
         Continually receive packets from the AGWPE API and append them to the packet list
         as byte strings.
         """
+        # set the socket to non-blocking. If this is not set manually in Python 3.7, sock_recv will
+        # block other tasks. It is only set once we begin recieving packets for metric calclations,
+        # because the earlier socket operations to create a connection to the TNC can run
+        # synchronously. Therefore there is no reason to set nonblocking early
+        # and create extra complexity.
+        self.client_socket.setblocking(False)
+        # loop to listen for packets sent from the TNC and add them to the queue for metrics
+        # processing
         while True:
             packet_bytes: bytes = b""
             bytes_recv: int = 0
