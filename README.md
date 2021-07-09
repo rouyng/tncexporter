@@ -210,12 +210,12 @@ TNC Exporter is designed to use the AGWPE or KISS interfaces that are provided b
 
 
 ## TODO
+- Minor code changes to support Python 3.7 and 3.8
+- Write integration tests
 - PyPI packaging
-- Test Python 3.8
 - Test support for other software TNCs such as UZ7HO and AGWPE
 - Create Dockerfile
 - Parse Mic-E and compressed position report formats to update distance metrics 
-- Build integration tests
 - AIS support (via Direwolf, currently have no way to test this as AIS needs a 9600 bps setup)
 
 ## Contributing
