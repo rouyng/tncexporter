@@ -1,4 +1,5 @@
 [![Test and lint](https://github.com/rouyng/tncexporter/actions/workflows/test-lint.yml/badge.svg)](https://github.com/rouyng/tncexporter/actions/workflows/test-lint.yml)
+![Python version](https://img.shields.io/github/pipenv/locked/python-version/rouyng/tncexporter)
 
 # TNC exporter
 
