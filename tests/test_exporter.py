@@ -15,6 +15,7 @@ import asyncio
 
 
 # TODO: write integration tests
+# FIXME: none of this works currently
 
 class AGWServer:
     def __init__(self):
@@ -27,6 +28,8 @@ class AGWServer:
         self.reader, self.writer = await asyncio.open_connection(host='127.0.0.1', port=self.port)
         version_request = await self.reader.read()
         print(version_request.decode())
+        # FIXME: check version request is as expected, send back reply
+        # FIXME: listen for monitoring request
 
     async def send_packets(self, packets):
         for p in packets:
@@ -70,4 +73,6 @@ class TestExporterCreation:
             receiver_location=location
         )
         loop.run_until_complete(exp.start())
+        # FIXME: get AGWServer and exporter coroutines running in one loop so they can communicate
+        # FIXME: end metric updater task after a certain number of packets are read
 
