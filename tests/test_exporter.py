@@ -8,6 +8,7 @@ https://websdr3.sdrutah.org
 http://dlwis-websdr.ham-radio-op.net:8901/
 http://appr.org.br:8901/
 """
+import socket
 
 from .context import tncexporter
 import pytest
@@ -15,7 +16,9 @@ import asyncio
 import os
 import sys
 import datetime
-import pytest_mock
+from pytest_mock import mocker
+from typing import List, Tuple
+import requests
 
 
 # TODO: write integration tests
@@ -31,6 +34,7 @@ import pytest_mock
 
 class AGWServer:
     """Simulates behavior of the AGW TCP/IP interface of a TNC"""
+
     def __init__(self):
         # create agw server and listen for version and monitoring requests
         self.port = 8000  # port to host test server
@@ -74,25 +78,79 @@ def setup_env():
             asyncio.WindowsProactorEventLoopPolicy())
 
 
+class ExporterTestWrapper:
+    """Run exporter, listener and test_function tasks within event loop"""
+
+    def __init__(self, test_function,
+                 packets: List[bytes],
+                 location: Tuple[float, float],
+                 kiss_mode: bool = False):
+        self.packets = packets
+        self.VERSION_REPLY = None  # TODO: add tnc version reply
+        self.loop = asyncio.get_event_loop()
+        # run exporter with hardcoded parameters
+        exp = tncexporter.TNCExporter(
+            tnc_url="http://localhost:8000",
+            host="localhost",
+            port=9110,
+            kiss_mode=kiss_mode,
+            stats_interval=1,
+            receiver_location=location
+        )
+        try:
+            # start metrics server and listener
+            with mocker.patch('socket.socket') as mock_sock:
+                mock_sock.return_value.recv.return_value = self.VERSION_REPLY
+                self.loop.run_until_complete(exp.start())
+
+        except KeyboardInterrupt:
+            pass
+        else:
+            try:
+                with mocker.patch("asyncio.AbstractEventLoop.sock_recv") as mock_sock:
+                    mock_sock.return_value = self.packets.pop()
+                    self.loop.run_forever()
+            # an IndexError will be raised when we have popped the last item from self.packets
+            except IndexError:
+                # once we exhaust the list of packets, run the tests
+                test_function()
+            finally:
+                self.loop.run_until_complete(exp.stop())
+        self.loop.stop()
+        self.loop.close()
+
+
 class TestExporterCreation:
     """Test startup of TNC exporter and connection to KISS and AGW interfaces"""
+
     def test_exporter_startup(self):
         """Test that tnc exporter runs and returns the help message. The most basic function test"""
+
         async def test_help_message():
             result = await run('python -m tncexporter --help')
             assert "Prometheus exporter for TNC metrics" in result
             assert "--update-interval <stats data refresh interval>" in result
+
         setup_env()
         asyncio.run(test_help_message())
 
 
 class TestMetricUpdating:
-    async def serve_agw_packets(self):
-        agw_packets_1 = [
-            b'\x00\x00\x00\x00U\x00\x00\x00KF6RAL-6\x00\x00APRS\x00\x00\x00\x00\x00\x00\x8d\x00\x00\x00\x00\x00\x00\x00 1:Fm KF6RAL-6 To APRS Via SHEPRD <UI pid=F0 Len=70 PF=0 >[17:52:54]\r@112331z4044.05N/11212.65W_262/002g005t035r000p002P002h86b10160.DsVP\r\n\r\x00',
-            b'\x00\x00\x00\x00U\x00\x00\x00WB7VPC\x00\x00\x00\x00T0TTXX\x00\x00\x00\x00\x7f\x00\x00\x00\x00\x00\x00\x00 1:Fm WB7VPC To T0TTXX Via KF6RAL-1,SHEPRD,WIDE2 <UI pid=F0 Len=42 F=0 >[17:53:16]\r`\'Mpl!n>/]"Cb}146.620MHz ToffON THE ROAD=\r\r\x00',
-            b'\x00\x00\x00\x00U\x00\x00\x00HOLDEN\x00\x00\x00\x00APOT30\x00\x00\x00\x00l\x00\x00\x00\x00\x00\x00\x00 1:Fm HOLDEN To APOT30 Via SHEPRD,WIDE2 <UI pid=F0 Len=31 PF=0 >[17:53:57]\r!3901.82N/11209.11W# 12.6V 34F \r\x00',
-            b'\x00\x00\x00\x00U\x00\x00\x00KC7YLH-2\x00\x00T0SYPT\x00\x00\x00\x00t\x00\x00\x00\x00\x00\x00\x00 1:Fm KC7YLH-2 To T0SYPT Via SHEPRD,WIDE1,WIDE2-1 <UI pid=F0 Len=29 PF=0 >[17:54:07]\r`\'Vgl Z>/\'"C9}|(2%6\'V|!wwT!|3\r\x00']
-        server = AGWServer()
-        await AGWServer.establish_connection()
-        await AGWServer.send_packets(agw_packets_1)
+    def test_one_packet(self):
+        agw_packets = [b'\x00\x00\x00\x00U\x00\x00\x00KF6WJS-14\x00S4PWYR\x00\x00\x00\x00X\x00\x00' \
+                       b'\x00\x00\x00\x00\x00 1:Fm KF6WJS-14 To S4PWYR Via WIDE2-2 <UI pid=F0 ' \
+                       b'Len=13 PF=0 >[14:32:38]\r`.a"l!^k/"6b}\r\x00 ']
+
+        def check_conditions():
+            # fetch the metrics endpoint
+            metrics_response = requests.get("http://localhost:9110")
+            # run tests against the text served at the metrics endpoint
+            assert metrics_response.status_code == 200
+            # TODO: replace these with actual tests
+            assert "something" in metrics_response.text
+            assert "something else" in metrics_response.text
+        loop = asyncio.get_event_loop()
+        ExporterTestWrapper(test_function=check_conditions,
+                            packets=agw_packets,
+                            kiss_mode=False,
+                            location=(None, None))
