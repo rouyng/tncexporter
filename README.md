@@ -1,3 +1,6 @@
+[![Test and lint](https://github.com/rouyng/tncexporter/actions/workflows/test-lint.yml/badge.svg)](https://github.com/rouyng/tncexporter/actions/workflows/test-lint.yml)
+![Python version](https://img.shields.io/github/pipenv/locked/python-version/rouyng/tncexporter)
+
 # TNC exporter
 
 ![Screenshot of TNC exporter's Grafana dashboard](grafana-dashboard/dashboard.png)
@@ -70,7 +73,7 @@ Here is an overview of the steps needed to run TNC exporter, assuming you don't 
 For detailed instructions, see the subheadings below.
 
 ### System requirements
-TNC exporter requires Python 3.9. You can download Python for all major operating systems [here](https://www.python.org/downloads/).
+TNC exporter requires Python 3.7 or newer. You can download Python for all major operating systems [here](https://www.python.org/downloads/).
 
 Please consult the [Prometheus](https://prometheus.io/docs/prometheus/latest/getting_started/) and [Grafana documentation](https://grafana.com/docs/grafana/latest/installation/requirements/) for system requirements of those applications.
 
@@ -190,7 +193,7 @@ Prometheus and grafana are used in this project because there are huge communiti
 
 If you are having issues setting up direwolf, please refer to that project's excellent [documentation](https://github.com/wb2osz/direwolf/tree/master/doc). In the rare case you have an issue not covered by the documentation, the [direwolf mailing list](https://groups.io/g/direwolf) is very helpful.
 
-If you are having issues installing python, I recommend either [this official installation guide](https://wiki.python.org/moin/BeginnersGuide/Download), or [this more in depth unofficial guide](https://docs.python-guide.org/starting/installation/). Please note that TNC exporter requires Python 3.9. Many issues are caused by having an outdated Python version installed, so please check the installed version first.
+If you are having issues installing python, I recommend either [this official installation guide](https://wiki.python.org/moin/BeginnersGuide/Download), or [this more in depth unofficial guide](https://docs.python-guide.org/starting/installation/). Please note that TNC exporter requires Python 3.7. Many issues are caused by having an outdated Python version installed, so please check the installed version first.
 
 ### Q: I changed the exporter's update-interval argument and now the plots in some Grafana panels seem wrong. What's going on?
 I have tuned the Grafana dashboard panels to match the TNC exporter's default 30 second metrics collection interval. If you adjust this interval by changing the update-interval command line argument, you may need to change some panel settings accordingly. This is only recommended for advanced users who are interested in digging in to the details of Grafana dashboard configuration.
@@ -210,7 +213,6 @@ TNC Exporter is designed to use the AGWPE or KISS interfaces that are provided b
 
 
 ## TODO
-- Minor code changes to support Python 3.7 and 3.8
 - Write integration tests
 - PyPI packaging
 - Test support for other software TNCs such as UZ7HO and AGWPE

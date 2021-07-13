@@ -97,6 +97,7 @@ class TNCExporter:
             packets_to_summarize = []
             start = datetime.datetime.now()
             try:
+                logging.debug("Metrics task checking queue for packets")
                 # Only try to get packet bytestrings from the queue if it is not empty
                 while not self.listener.packet_queue.empty():
                     packet = await self.listener.packet_queue.get()
@@ -122,6 +123,7 @@ class TNCExporter:
             logging.info(f"Updated metrics for {len(packets_to_summarize)} packets")
             end = datetime.datetime.now()
             wait_seconds = (start + self.stats_interval - end).total_seconds()
+            logging.debug(f"Metrics task sleeping for {wait_seconds:.2f} seconds")
             await asyncio.sleep(wait_seconds)
 
     def packet_metrics(self, packet_info: PacketInfo):
