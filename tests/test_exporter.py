@@ -83,9 +83,11 @@ class ExporterTestWrapper:
 
     def __init__(self, test_function,
                  loop: asyncio.AbstractEventLoop,
+                 mocker,
                  packets: List[bytes],
                  location: Tuple[float, float],
                  kiss_mode: bool = False,
+
                  ):
         self.packets = packets
         self.VERSION_REPLY = b"\x00\x00\x00\x00\x52\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
@@ -102,17 +104,17 @@ class ExporterTestWrapper:
             receiver_location=location
         )
         try:
-            with mocker.patch("socket.socket") as mock_sock:
-                mock_sock.recv.return_value = self.VERSION_REPLY
-                self.loop.run_until_complete(exp.start())
+            mock_sock = mocker.patch('socket.socket')
+            mock_sock.recv.return_value = self.VERSION_REPLY
+            self.loop.run_until_complete(exp.start())
 
         except KeyboardInterrupt:
             pass
         else:
             try:
-                with mocker.patch("asyncio.AbstractEventLoop") as mock_async_sock:
-                    mock_async_sock.sock_recv.return_value = self.packets.pop()
-                    self.loop.run_forever()
+                mock_async_sock = mocker.patch('asyncio.AbstractEventLoop.sock_recv')
+                mock_async_sock.return_value = self.packets.pop()
+                self.loop.run_forever()
             # an IndexError will be raised when we have popped the last item from self.packets
             except IndexError:
                 # once we exhaust the list of packets, run the tests
@@ -155,6 +157,7 @@ class TestMetricUpdating:
 
         ExporterTestWrapper(test_function=check_conditions,
                             loop=event_loop,
+                            mocker=mocker,
                             packets=agw_packets,
                             kiss_mode=False,
                             location=(None, None))
