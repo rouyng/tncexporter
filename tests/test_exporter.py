@@ -88,7 +88,9 @@ class ExporterTestWrapper:
                  kiss_mode: bool = False,
                  ):
         self.packets = packets
-        self.VERSION_REPLY = None  # TODO: add tnc version reply
+        self.VERSION_REPLY = b"\x00\x00\x00\x00\x52\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
+                             b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
+                             b"\x00\x00\x00\x00"
         self.loop = loop
         # run exporter with hardcoded parameters
         exp = tncexporter.TNCExporter(
@@ -100,17 +102,16 @@ class ExporterTestWrapper:
             receiver_location=location
         )
         try:
-            # start metrics server and listener
-            with mocker.patch('socket.socket') as mock_sock:
-                mock_sock.return_value.recv.return_value = self.VERSION_REPLY
+            with mocker.patch("socket.socket") as mock_sock:
+                mock_sock.recv.return_value = self.VERSION_REPLY
                 self.loop.run_until_complete(exp.start())
 
         except KeyboardInterrupt:
             pass
         else:
             try:
-                with mocker.patch("asyncio.AbstractEventLoop.sock_recv") as mock_sock:
-                    mock_sock.return_value = self.packets.pop()
+                with mocker.patch("asyncio.AbstractEventLoop") as mock_async_sock:
+                    mock_async_sock.sock_recv.return_value = self.packets.pop()
                     self.loop.run_forever()
             # an IndexError will be raised when we have popped the last item from self.packets
             except IndexError:
