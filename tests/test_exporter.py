@@ -82,12 +82,14 @@ class ExporterTestWrapper:
     """Run exporter, listener and test_function tasks within event loop"""
 
     def __init__(self, test_function,
+                 loop: asyncio.AbstractEventLoop,
                  packets: List[bytes],
                  location: Tuple[float, float],
-                 kiss_mode: bool = False):
+                 kiss_mode: bool = False,
+                 ):
         self.packets = packets
         self.VERSION_REPLY = None  # TODO: add tnc version reply
-        self.loop = asyncio.get_event_loop()
+        self.loop = loop
         # run exporter with hardcoded parameters
         exp = tncexporter.TNCExporter(
             tnc_url="http://localhost:8000",
@@ -136,7 +138,7 @@ class TestExporterCreation:
 
 
 class TestMetricUpdating:
-    def test_one_packet(self):
+    def test_one_packet(self, event_loop):
         agw_packets = [b'\x00\x00\x00\x00U\x00\x00\x00KF6WJS-14\x00S4PWYR\x00\x00\x00\x00X\x00\x00' \
                        b'\x00\x00\x00\x00\x00 1:Fm KF6WJS-14 To S4PWYR Via WIDE2-2 <UI pid=F0 ' \
                        b'Len=13 PF=0 >[14:32:38]\r`.a"l!^k/"6b}\r\x00 ']
@@ -149,8 +151,9 @@ class TestMetricUpdating:
             # TODO: replace these with actual tests
             assert "something" in metrics_response.text
             assert "something else" in metrics_response.text
-        loop = asyncio.get_event_loop()
+
         ExporterTestWrapper(test_function=check_conditions,
+                            loop=event_loop,
                             packets=agw_packets,
                             kiss_mode=False,
                             location=(None, None))
