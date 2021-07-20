@@ -15,6 +15,8 @@ class PacketInfo:
         logging.debug(f"Parsing packet bytes: {repr(self.raw_bytes)}")
         self.frame_type: str = "Unknown"  # type of frame (U, I, S, T, other)
         self.data_len: int = 0  # length of data in packet (inclusive of 36 byte header)
+        self.data_type: str = "Unknown"  # Describes format of data in the information field
+        self.info_field: bytes = b""  # Contents of information field
         self.call_from: str = ""  # originating callsign
         self.call_to: str = ""  # destination callsign
         # timestamp of when packet was received by TNC
@@ -105,6 +107,7 @@ class PacketInfo:
             self.call_from = raw_packet[8:18].strip(b'\x00').decode("ascii", errors="replace")
             self.call_to = raw_packet[18:28].strip(b'\x00').decode("ascii", errors="replace")
             data_bytes = raw_packet[36:].strip(b'\x00')
+            self.info_field = data_bytes.split(b'\r')[1]
             self.len_data = len(data_bytes)
             data_string = data_bytes.decode("ascii", errors="replace")
             logging.debug(f"Parsing data field: {repr(data_string)}")
@@ -191,3 +194,35 @@ class PacketInfo:
                 self.len_data = len(data_bytes)
         except IndexError:
             logging.error("Packet less than expected length")
+
+    def _parse_info_field(self, info_field: bytes):
+        logging.debug(f"Parsing info field: {repr(info_field)}")
+        field_decoders = {b"\x1c": self._mic_e,
+                          "b\x1d": self._mic_e,
+                          "b'": self._mic_e,
+                          "b`": self._mic_e,
+                          "b!": self._position,
+                          "b/": self._position,
+                          "b=": self._position,
+                          "b@": self._position,}
+
+        data_type_byte = info_field[0]
+        try:
+            field_decoders[data_type_byte]()
+        except KeyError:
+            pass
+
+    # The following functions set packet data type and perform some parsing based on the data type
+    # identifier byte in the information field of the packet.
+    def _mic_e(self):
+        self.data_type = "Mic-E"
+        # TODO: parse coordinates from Mic-E format
+
+    def _weather(self):
+        self.data_type = "Weather"
+
+    def _position(self):
+        self.data_type = "Position"
+
+    def _message(self):
+        self.data_type = "Message"
