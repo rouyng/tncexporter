@@ -145,7 +145,8 @@ class TNCExporter:
             PACKET_RX.inc({'ax25_frame_type': packet_info.frame_type,
                            'path': path_type,
                            'from_cs': packet_info.call_from})
-            if all([v is not None for v in packet_info.lat_lon]) \
+            if self.location \
+                    and all([v is not None for v in packet_info.lat_lon]) \
                     and all([w is not None for w in self.location]):
                 # calculate distance between TNC location and packet's reported lat/lon
                 distance_from_tnc = packet_info.haversine_distance(tnc_pos=self.location)
@@ -190,7 +191,7 @@ class TNCExporter:
             packets_tx_digi_count = len([p for p in packets_tx if p.hops_count > 0])
             packets_tx_simplex_count = len([p for p in packets_tx if p.hops_count == 0])
 
-            if all([w is not None for w in self.location]):
+            if self.location and all([w is not None for w in self.location]):
                 # ValueError is raised if max arg is empty
                 try:
                     max_rf_distance = max(
