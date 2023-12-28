@@ -106,9 +106,9 @@ class Listener:
         as byte strings.
         """
         # set the socket to non-blocking. If this is not set manually in Python 3.7, sock_recv will
-        # block other tasks. It is only set once we begin recieving packets for metric calclations,
+        # block other tasks. It is only set once we begin receiving packets for metric calculations,
         # because the earlier socket operations to create a connection to the TNC can run
-        # synchronously. Therefore there is no reason to set nonblocking early
+        # synchronously. Therefore, there is no reason to set nonblocking early
         # and create extra complexity.
         self.client_socket.setblocking(False)
         # loop to listen for packets sent from the TNC and add them to the queue for metrics
@@ -122,6 +122,8 @@ class Listener:
                     if chunk == b'':
                         raise ConnectionResetError("Socket connection broken")
                 except ConnectionResetError:
+                    # FIXME: reconnection blocks updating metrics, per issue #9
+                    #  https://github.com/rouyng/tncexporter/issues/9
                     logging.error("Connection to TNC was reset")
                     self.client_socket.close()
                     # remake client socket
