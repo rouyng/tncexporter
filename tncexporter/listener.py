@@ -124,6 +124,8 @@ class Listener:
                 except ConnectionResetError:
                     logging.error("Connection to TNC was reset")
                     self.client_socket.close()
+                    # TODO: can we force any metrics in queue to be exported once the socket closes, so they don't wait
+                    #  in limbo until the sock_recv coroutine runs again?
                     # remake client socket
                     self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     if self.kiss_mode:
