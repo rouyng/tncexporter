@@ -122,8 +122,6 @@ class Listener:
                     if chunk == b'':
                         raise ConnectionResetError("Socket connection broken")
                 except ConnectionResetError:
-                    # FIXME: reconnection blocks updating metrics, per issue #9
-                    #  https://github.com/rouyng/tncexporter/issues/9
                     logging.error("Connection to TNC was reset")
                     self.client_socket.close()
                     # remake client socket
@@ -132,6 +130,8 @@ class Listener:
                         self.connect_kiss(self.tnc_host, self.tnc_port)
                     else:
                         self.connect_agw(self.tnc_host, self.tnc_port)
+                    # set socket to nonblocking to prevent blocking async tasks
+                    self.client_socket.setblocking(False)
                     continue
                 else:
                     packet_bytes += chunk
